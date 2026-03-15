@@ -1,11 +1,13 @@
+using FileFox_Backend.Infrastructure.Extensions;
+using FileFox_Backend.Core.Models;
+using FileFox_Backend.Core.Interfaces;
+using FileFox_Backend.Infrastructure.Data;
+using FileFox_Backend.Infrastructure.Services;
 using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using FileFox_Backend.Controllers;
-using FileFox_Backend.Data;
-using FileFox_Backend.Models;
-using FileFox_Backend.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -27,7 +29,8 @@ public class FilesControllerTests
     {
         using var db = GetInMemoryDb();
         var blob = new LocalBlobStorage(new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
-        var controller = new FilesController(db, blob);
+        var fileStore = new LocalFileStore(db, blob);
+        var controller = new FilesController(db, blob, fileStore);
 
         // Mock user identity
         var userId = Guid.NewGuid().ToString();
