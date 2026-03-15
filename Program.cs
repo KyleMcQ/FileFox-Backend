@@ -1,7 +1,13 @@
-using FileFox_Backend.Data;
-using FileFox_Backend.Services;
-using FileFox_Backend.Middleware;
-using FileFox_Backend.Authorization;
+using FileFox_Backend.Infrastructure.Extensions;
+using FileFox_Backend.Core.Models;
+using FileFox_Backend.Core.Interfaces;
+using FileFox_Backend.Infrastructure.Data;
+using FileFox_Backend.Core.Models;
+using FileFox_Backend.Core.Interfaces;
+using FileFox_Backend.Infrastructure.Data;
+using FileFox_Backend.Infrastructure.Services;
+using FileFox_Backend.Infrastructure.Authorization;
+using FileFox_Backend.Infrastructure.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -25,6 +31,7 @@ builder.Services.AddScoped<IUserStore, EFCoreUserStore>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<IBlobStorageService, LocalBlobStorage>();
+builder.Services.AddScoped<IFileStore, LocalFileStore>();
 builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<FileOwnerHandler>();
 

@@ -1,12 +1,21 @@
+using FileFox_Backend.Infrastructure.Extensions;
+using FileFox_Backend.Core.Models;
+using FileFox_Backend.Core.Interfaces;
+using FileFox_Backend.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using FileFox_Backend.Data;
-using FileFox_Backend.Models;
-using FileFox_Backend.Extensions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
 namespace FileFox_Backend.Controllers;
+using FileFox_Backend.Core.Models;
+using FileFox_Backend.Core.Interfaces;
+using FileFox_Backend.Infrastructure.Data;
+using FileFox_Backend.Infrastructure.Services;
+using FileFox_Backend.Core.Models;
+using FileFox_Backend.Core.Interfaces;
+using FileFox_Backend.Infrastructure.Data;
+using FileFox_Backend.Infrastructure.Services;
 
 [ApiController]
 [Route("keys")]
