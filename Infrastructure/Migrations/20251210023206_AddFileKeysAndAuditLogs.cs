@@ -1,12 +1,9 @@
-using FileFox_Backend.Infrastructure.Extensions;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+using FileFox_Backend.Core.Interfaces;
 namespace FileFox_Backend.Infrastructure.Migrations
 {
     /// <inheritdoc />

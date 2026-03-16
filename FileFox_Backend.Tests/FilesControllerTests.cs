@@ -1,13 +1,11 @@
-using FileFox_Backend.Infrastructure.Extensions;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
-using FileFox_Backend.Infrastructure.Services;
 using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using FileFox_Backend.Controllers;
+using FileFox_Backend.Infrastructure.Data;
+using FileFox_Backend.Core.Models;
+using FileFox_Backend.Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Xunit;

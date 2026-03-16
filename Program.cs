@@ -1,13 +1,9 @@
-using FileFox_Backend.Infrastructure.Extensions;
-using FileFox_Backend.Core.Models;
 using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
 using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
 using FileFox_Backend.Infrastructure.Data;
 using FileFox_Backend.Infrastructure.Services;
-using FileFox_Backend.Infrastructure.Authorization;
 using FileFox_Backend.Infrastructure.Middleware;
+using FileFox_Backend.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -24,7 +20,7 @@ builder.Services.AddSingleton<ISecretProvider, LocalSecretProvider>();
 
 // -------------------- DATABASE --------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseInMemoryDatabase("FileFoxMemoryDb"));
 
 // -------------------- SERVICES --------------------
 builder.Services.AddScoped<IUserStore, EFCoreUserStore>();

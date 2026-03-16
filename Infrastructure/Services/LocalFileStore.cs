@@ -1,17 +1,11 @@
-using FileFox_Backend.Infrastructure.Extensions;
-using FileFox_Backend.Core.Models;
 using FileFox_Backend.Core.Interfaces;
+using FileFox_Backend.Core.Models;
 using FileFox_Backend.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
+using FileFox_Backend.Core.Interfaces;
 namespace FileFox_Backend.Infrastructure.Services;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
 
 public class LocalFileStore : IFileStore
 {
@@ -28,19 +22,14 @@ public class LocalFileStore : IFileStore
     {
         var fileId = Guid.NewGuid();
 
-        // This is a direct upload, so we don't have client-side encrypted manifest header or wrapped keys in this simplified flow.
-        // In a real FileFox flow, everything is encrypted client-side.
-        // For the sake of completing the "allow for file uploading" requirement:
-
         await using var stream = file.OpenReadStream();
-        // Treat the whole file as one chunk for simple upload
         await _blob.PutChunkAsync(fileId, 0, stream);
 
         var record = new FileRecord
         {
             Id = fileId,
             UserId = userId,
-            EncryptedFileName = file.FileName, // In reality, this would be encrypted
+            EncryptedFileName = file.FileName,
             ChunkSize = (int)file.Length,
             CryptoVersion = "v1-simple",
             ManifestBlobPath = string.Empty,

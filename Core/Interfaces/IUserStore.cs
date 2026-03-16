@@ -1,11 +1,7 @@
-using FileFox_Backend.Infrastructure.Extensions;
 using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
+using FileFox_Backend.Core.Models;
 
 namespace FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Models;
 
 public interface IUserStore
 {

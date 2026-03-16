@@ -1,13 +1,8 @@
-using FileFox_Backend.Infrastructure.Extensions;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
 using System.Net;
 using System.Text.Json;
 
+using FileFox_Backend.Core.Interfaces;
 namespace FileFox_Backend.Infrastructure.Middleware;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Models;
 
 public class GlobalExceptionMiddleware
 {
