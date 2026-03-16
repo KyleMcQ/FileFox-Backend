@@ -34,6 +34,16 @@ builder.Services.AddScoped<IAuthorizationHandler, FileOwnerHandler>();
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // -------------------- AUTHORIZATION --------------------
 builder.Services.AddAuthorization(options =>
 {
@@ -115,6 +125,8 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
