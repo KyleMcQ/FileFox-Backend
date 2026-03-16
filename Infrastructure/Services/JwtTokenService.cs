@@ -1,19 +1,11 @@
-using FileFox_Backend.Infrastructure.Extensions;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using FileFox_Backend.Core.Models;
 using Microsoft.IdentityModel.Tokens;
 
+using FileFox_Backend.Core.Interfaces;
 namespace FileFox_Backend.Infrastructure.Services;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
 
 public class JwtTokenService : ITokenService
 {

@@ -1,9 +1,6 @@
-using FileFox_Backend.Infrastructure.Extensions;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 
+using FileFox_Backend.Core.Interfaces;
 namespace FileFox_Backend.Infrastructure.Authorization
 {
     public class FileOwnerRequirement : IAuthorizationRequirement

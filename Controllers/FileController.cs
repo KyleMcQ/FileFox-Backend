@@ -1,22 +1,15 @@
-using FileFox_Backend.Infrastructure.Extensions;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
 using System.Security.Claims;
+using FileFox_Backend.Core.Models;
+using FileFox_Backend.Infrastructure.Extensions;
+using FileFox_Backend.Infrastructure.Services;
+using FileFox_Backend.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
+using FileFox_Backend.Core.Interfaces;
 namespace FileFox_Backend.Controllers;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
-using FileFox_Backend.Infrastructure.Services;
-using FileFox_Backend.Core.Models;
-using FileFox_Backend.Core.Interfaces;
-using FileFox_Backend.Infrastructure.Data;
-using FileFox_Backend.Infrastructure.Services;
 
 [ApiController]
 [Route("files")]
@@ -101,9 +94,6 @@ public class FilesController : ControllerBase
         var record = await _db.Files.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
 
         if (record == null) return NotFound();
-
-        // In a chunked upload, we might want to verify all chunks are present here.
-        // For now, we'll just mark it as complete by ensuring it exists.
 
         return Ok(new { status = "Completed", fileId = id });
     }
