@@ -30,6 +30,8 @@ public class LocalFileStore : IFileStore
             Id = fileId,
             UserId = userId,
             EncryptedFileName = file.FileName,
+            ContentType = file.ContentType,
+            TotalSize = file.Length,
             ChunkSize = (int)file.Length,
             CryptoVersion = "v1-simple",
             ManifestBlobPath = string.Empty,
@@ -45,6 +47,7 @@ public class LocalFileStore : IFileStore
     public async Task<IEnumerable<FileRecord>> ListAsync(Guid userId, CancellationToken ct = default)
     {
         return await _db.Files
+            .Include(f => f.Keys)
             .Where(f => f.UserId == userId)
             .ToListAsync(ct);
     }
@@ -52,6 +55,7 @@ public class LocalFileStore : IFileStore
     public async Task<FileRecord?> GetAsync(Guid userId, Guid fileId)
     {
         return await _db.Files
+            .Include(f => f.Keys)
             .FirstOrDefaultAsync(f => f.UserId == userId && f.Id == fileId);
     }
 
