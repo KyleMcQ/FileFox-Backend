@@ -2,6 +2,9 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using FileFox_Backend.Core.Interfaces;
+
+namespace FileFox_Backend.Infrastructure.Services;
 
 public class LocalBlobStorage : IBlobStorageService
 {

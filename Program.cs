@@ -5,6 +5,7 @@ using FileFox_Backend.Infrastructure.Services;
 using FileFox_Backend.Infrastructure.Middleware;
 using FileFox_Backend.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -29,7 +30,7 @@ builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<IBlobStorageService, LocalBlobStorage>();
 builder.Services.AddScoped<IFileStore, LocalFileStore>();
 builder.Services.AddScoped<FileService>();
-builder.Services.AddScoped<FileOwnerHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, FileOwnerHandler>();
 
 builder.Services.AddControllers();
 
@@ -77,10 +78,10 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header. Example: 'Bearer {token}'",
+        Description = "JWT Authorization header using the Bearer scheme. Example: 'abc123token'",
         Name = "Authorization",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
+        Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT"
     });
