@@ -69,6 +69,10 @@ public class FilesController : ControllerBase
     [HttpPut("{id:guid}/chunks/{index:int}")]
     public async Task<IActionResult> UploadChunk(Guid id, int index)
     {
+        var userId = User.GetUserId();
+        var record = await _db.Files.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        if (record == null) return NotFound();
+
         await _blob.PutChunkAsync(id, index, Request.Body);
         return Ok();
     }
@@ -96,5 +100,54 @@ public class FilesController : ControllerBase
         if (record == null) return NotFound();
 
         return Ok(new { status = "Completed", fileId = id });
+    }
+
+    // ---------------- LIST FILES ----------------
+    [HttpGet]
+    public async Task<IActionResult> List()
+    {
+        var userId = User.GetUserId();
+        var files = await _fileStore.ListAsync(userId);
+        return Ok(files);
+    }
+
+    // ---------------- GET METADATA ----------------
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetMetadata(Guid id)
+    {
+        var userId = User.GetUserId();
+        var record = await _db.Files.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+
+        if (record == null) return NotFound();
+
+        return Ok(record);
+    }
+
+    // ---------------- GET MANIFEST ----------------
+    [HttpGet("{id:guid}/manifest")]
+    public async Task<IActionResult> GetManifest(Guid id)
+    {
+        var userId = User.GetUserId();
+        var record = await _db.Files.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        if (record == null) return NotFound();
+
+        var stream = await _blob.GetManifestAsync(id);
+        if (stream == null) return NotFound("Manifest not found");
+
+        return File(stream, "application/octet-stream", "manifest");
+    }
+
+    // ---------------- GET CHUNK ----------------
+    [HttpGet("{id:guid}/chunks/{index:int}")]
+    public async Task<IActionResult> GetChunk(Guid id, int index)
+    {
+        var userId = User.GetUserId();
+        var record = await _db.Files.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        if (record == null) return NotFound();
+
+        var stream = await _blob.GetChunkAsync(id, index);
+        if (stream == null) return NotFound("Chunk not found");
+
+        return File(stream, "application/octet-stream", $"chunk_{index}");
     }
 }
