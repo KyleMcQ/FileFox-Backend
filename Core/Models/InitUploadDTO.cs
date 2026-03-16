@@ -6,5 +6,7 @@ public class InitUploadDto
     public string EncryptedManifestHeader { get; set; } = null!;
     public string WrappedFileKey { get; set; } = null!;
     public int ChunkSize { get; set; }
+    public long TotalSize { get; set; }
+    public string? ContentType { get; set; }
     public string CryptoVersion { get; set; } = "v1";
 }
