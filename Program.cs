@@ -27,8 +27,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IUserStore, EFCoreUserStore>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
-builder.Services.AddScoped<IBlobStorageService, LocalBlobStorage>();
-builder.Services.AddScoped<IFileStore, LocalFileStore>();
+builder.Services.AddSingleton<IBlobStorageService, InMemoryBlobStorage>();
+builder.Services.AddScoped<IFileStore, InMemoryFileStore>();
 builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<IAuthorizationHandler, FileOwnerHandler>();
 

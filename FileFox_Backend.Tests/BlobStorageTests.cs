@@ -10,13 +10,9 @@ namespace FileFox_Backend.Tests;
 
 public class BlobStorageTests
 {
-    private LocalBlobStorage GetBlobStorage()
+    private InMemoryBlobStorage GetBlobStorage()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection()
-            .Build();
-
-        return new LocalBlobStorage(config);
+        return new InMemoryBlobStorage();
     }
 
     [Fact]
@@ -27,8 +23,8 @@ public class BlobStorageTests
         var chunkData = Encoding.UTF8.GetBytes("test chunk data");
 
         using var ms = new MemoryStream(chunkData);
-        var path = await blob.PutChunkAsync(fileId, 0, ms);
-        Assert.True(File.Exists(path));
+        var key = await blob.PutChunkAsync(fileId, 0, ms);
+        Assert.NotEmpty(key);
 
         using var retrieved = await blob.GetChunkAsync(fileId, 0);
         Assert.NotNull(retrieved);
@@ -45,8 +41,8 @@ public class BlobStorageTests
         var manifestData = Encoding.UTF8.GetBytes("manifest content");
 
         using var ms = new MemoryStream(manifestData);
-        var path = await blob.PutManifestAsync(fileId, ms);
-        Assert.True(File.Exists(path));
+        var key = await blob.PutManifestAsync(fileId, ms);
+        Assert.NotEmpty(key);
 
         using var retrieved = await blob.GetManifestAsync(fileId);
         Assert.NotNull(retrieved);

@@ -26,8 +26,8 @@ public class FilesControllerTests
     public async Task InitUpload_CreatesFileRecordAndManifest()
     {
         using var db = GetInMemoryDb();
-        var blob = new LocalBlobStorage(new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
-        var fileStore = new LocalFileStore(db, blob);
+        var blob = new InMemoryBlobStorage();
+        var fileStore = new InMemoryFileStore(db, blob);
         var controller = new FilesController(db, blob, fileStore);
 
         // Mock user identity
@@ -67,15 +67,15 @@ public class FilesControllerTests
         Assert.Equal(dto.EncryptedFileName, record.EncryptedFileName);
         Assert.False(string.IsNullOrEmpty(record.ManifestBlobPath));
 
-        Assert.True(File.Exists(record.ManifestBlobPath));
+        Assert.NotNull(await blob.GetManifestAsync((Guid)fileId));
     }
 
     [Fact]
     public async Task GetMetadata_IncludesKeys()
     {
         using var db = GetInMemoryDb();
-        var blob = new LocalBlobStorage(new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
-        var fileStore = new LocalFileStore(db, blob);
+        var blob = new InMemoryBlobStorage();
+        var fileStore = new InMemoryFileStore(db, blob);
         var controller = new FilesController(db, blob, fileStore);
 
         var userId = Guid.NewGuid();
@@ -110,8 +110,8 @@ public class FilesControllerTests
     public async Task Download_ReturnsFileStream_ForSimpleFile()
     {
         using var db = GetInMemoryDb();
-        var blob = new LocalBlobStorage(new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build());
-        var fileStore = new LocalFileStore(db, blob);
+        var blob = new InMemoryBlobStorage();
+        var fileStore = new InMemoryFileStore(db, blob);
         var controller = new FilesController(db, blob, fileStore);
 
         var userId = Guid.NewGuid();
