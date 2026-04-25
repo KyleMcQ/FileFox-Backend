@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://localhost:7227'; // Default ASP.NET Core port, adjust if needed
+const API_BASE_URL = 'http://localhost:5026'; // Default ASP.NET Core port, adjust if needed
 
 const api = axios.create({
   baseURL: API_BASE_URL,

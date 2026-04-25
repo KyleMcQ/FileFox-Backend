@@ -51,6 +51,7 @@ const Dashboard = ({ onLogout }) => {
       let i = 0;
       while (true) {
         try {
+          console.log(`Downloading chunk ${i}...`);
           const response = await api.get(`/files/${fileId}/chunks/${i}`, { responseType: 'arraybuffer' });
           const combined = new Uint8Array(response.data);
 
@@ -61,8 +62,11 @@ const Dashboard = ({ onLogout }) => {
           decryptedChunks.push(decrypted);
           i++;
         } catch (e) {
-          // Break when no more chunks (404)
-          break;
+          if (e.response?.status === 404 && i > 0) {
+            // Break when no more chunks (404)
+            break;
+          }
+          throw e;
         }
       }
 
@@ -77,6 +81,17 @@ const Dashboard = ({ onLogout }) => {
     } catch (err) {
       console.error(err);
       alert("Secure download failed");
+    }
+  };
+
+  const handleDelete = async (fileId) => {
+    if (!window.confirm("Are you sure you want to delete this file?")) return;
+    try {
+      await api.delete(`/files/${fileId}`);
+      alert("File deleted");
+      fetchFiles();
+    } catch (err) {
+      alert("Delete failed");
     }
   };
 
@@ -116,6 +131,7 @@ const Dashboard = ({ onLogout }) => {
               <td>
                 <button onClick={() => handleDownloadDirect(f.id, f.fileName)}>Direct</button>
                 <button onClick={() => handleDownloadSecure(f.id, f.fileName, f.wrappedKeys)} style={{ marginLeft: '5px' }}>Secure</button>
+                <button onClick={() => handleDelete(f.id)} style={{ marginLeft: '5px', color: 'red' }}>Delete</button>
               </td>
             </tr>
           ))}

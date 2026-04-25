@@ -72,7 +72,7 @@ const FileUpload = ({ onUploadSuccess, keys }) => {
         combined.set(iv, 0);
         combined.set(new Uint8Array(encrypted), iv.length);
 
-        await api.put(`/files/${fileId}/chunks/${i}`, combined, {
+        await api.put(`/files/${fileId}/chunks/${i}`, new Blob([combined]), {
           headers: { 'Content-Type': 'application/octet-stream' }
         });
       }

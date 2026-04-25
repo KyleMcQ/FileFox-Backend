@@ -70,6 +70,7 @@ public class FilesController : ControllerBase
 
     // ---------------- UPLOAD CHUNK ----------------
     [HttpPut("{id:guid}/chunks/{index:int}")]
+    [DisableRequestSizeLimit]
     public async Task<IActionResult> UploadChunk(Guid id, int index)
     {
         var userId = User.GetUserId();
@@ -213,5 +214,17 @@ public class FilesController : ControllerBase
         {
             FileDownloadName = record.EncryptedFileName
         };
+    }
+
+    // ---------------- DELETE FILE ----------------
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var userId = User.GetUserId();
+        var success = await _fileStore.DeleteAsync(userId, id);
+
+        if (!success) return NotFound();
+
+        return Ok();
     }
 }

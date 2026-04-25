@@ -7,12 +7,12 @@ using Microsoft.EntityFrameworkCore;
 using FileFox_Backend.Core.Interfaces;
 namespace FileFox_Backend.Infrastructure.Services;
 
-public class LocalFileStore : IFileStore
+public class InMemoryFileStore : IFileStore
 {
     private readonly ApplicationDbContext _db;
     private readonly IBlobStorageService _blob;
 
-    public LocalFileStore(ApplicationDbContext db, IBlobStorageService blob)
+    public InMemoryFileStore(ApplicationDbContext db, IBlobStorageService blob)
     {
         _db = db;
         _blob = blob;

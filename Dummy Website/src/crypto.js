@@ -106,10 +106,13 @@ async function deriveKeyFromPassword(password, salt) {
  * Encrypts a file key (AES) with an RSA public key.
  */
 export async function wrapFileKey(fileKey, publicKey) {
+  // Export the file key to raw bytes first
+  const exported = await window.crypto.subtle.exportKey("raw", fileKey);
+
   const wrapped = await window.crypto.subtle.encrypt(
     { name: "RSA-OAEP" },
     publicKey,
-    fileKey
+    exported
   );
   return btoa(String.fromCharCode(...new Uint8Array(wrapped)));
 }
@@ -119,11 +122,13 @@ export async function wrapFileKey(fileKey, publicKey) {
  */
 export async function unwrapFileKey(wrappedKeyBase64, privateKey) {
   const wrapped = new Uint8Array(atob(wrappedKeyBase64).split("").map(c => c.charCodeAt(0)));
+
   const unwrapped = await window.crypto.subtle.decrypt(
     { name: "RSA-OAEP" },
     privateKey,
     wrapped
   );
+
   return await window.crypto.subtle.importKey(
     "raw",
     unwrapped,
@@ -140,7 +145,7 @@ export async function generateFileKey() {
   return await window.crypto.subtle.generateKey(
     { name: "AES-GCM", length: 256 },
     true,
-    ["encrypt", "decrypt"]
+    ["encrypt", "decrypt", "wrapKey", "unwrapKey"]
   );
 }
 
