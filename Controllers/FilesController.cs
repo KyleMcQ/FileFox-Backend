@@ -214,4 +214,16 @@ public class FilesController : ControllerBase
             FileDownloadName = record.EncryptedFileName
         };
     }
+
+    // ---------------- DELETE FILE ----------------
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var userId = User.GetUserId();
+        var success = await _fileStore.DeleteAsync(userId, id);
+
+        if (!success) return NotFound();
+
+        return Ok();
+    }
 }

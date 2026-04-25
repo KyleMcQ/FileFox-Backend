@@ -80,6 +80,17 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
+  const handleDelete = async (fileId) => {
+    if (!window.confirm("Are you sure you want to delete this file?")) return;
+    try {
+      await api.delete(`/files/${fileId}`);
+      alert("File deleted");
+      fetchFiles();
+    } catch (err) {
+      alert("Delete failed");
+    }
+  };
+
   if (loading) return <div>Loading Keys...</div>;
   if (!keys) return <div>Error loading keys. Please re-login. <button onClick={onLogout}>Logout</button></div>;
 
@@ -116,6 +127,7 @@ const Dashboard = ({ onLogout }) => {
               <td>
                 <button onClick={() => handleDownloadDirect(f.id, f.fileName)}>Direct</button>
                 <button onClick={() => handleDownloadSecure(f.id, f.fileName, f.wrappedKeys)} style={{ marginLeft: '5px' }}>Secure</button>
+                <button onClick={() => handleDelete(f.id)} style={{ marginLeft: '5px', color: 'red' }}>Delete</button>
               </td>
             </tr>
           ))}
