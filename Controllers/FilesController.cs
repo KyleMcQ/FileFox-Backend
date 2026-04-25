@@ -70,6 +70,7 @@ public class FilesController : ControllerBase
 
     // ---------------- UPLOAD CHUNK ----------------
     [HttpPut("{id:guid}/chunks/{index:int}")]
+    [DisableRequestSizeLimit]
     public async Task<IActionResult> UploadChunk(Guid id, int index)
     {
         var userId = User.GetUserId();

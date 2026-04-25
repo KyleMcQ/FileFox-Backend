@@ -51,6 +51,7 @@ const Dashboard = ({ onLogout }) => {
       let i = 0;
       while (true) {
         try {
+          console.log(`Downloading chunk ${i}...`);
           const response = await api.get(`/files/${fileId}/chunks/${i}`, { responseType: 'arraybuffer' });
           const combined = new Uint8Array(response.data);
 
@@ -61,8 +62,11 @@ const Dashboard = ({ onLogout }) => {
           decryptedChunks.push(decrypted);
           i++;
         } catch (e) {
-          // Break when no more chunks (404)
-          break;
+          if (e.response?.status === 404 && i > 0) {
+            // Break when no more chunks (404)
+            break;
+          }
+          throw e;
         }
       }
 
