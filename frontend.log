@@ -7,3 +7,6 @@
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
+1:01:52 AM [vite] (client) hmr update /src/components/Mfa.jsx
+1:02:27 AM [vite] (client) ✨ new dependencies optimized: qrcode.react
+1:02:27 AM [vite] (client) ✨ optimized dependencies changed. reloading

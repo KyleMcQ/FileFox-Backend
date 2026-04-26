@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from '../api';
+import { QRCodeCanvas } from 'qrcode.react';
 
 const Mfa = () => {
   const [mfaData, setMfaData] = useState(null);
@@ -33,7 +34,10 @@ const Mfa = () => {
         <div>
           <p>Secret: {mfaData.base32Secret}</p>
           <p>Scan the QR code or enter the secret in your authenticator app.</p>
-          <p><i>(In a real app, show QR from {mfaData.otpAuthUri})</i></p>
+
+          <div style={{ margin: '20px 0' }}>
+            <QRCodeCanvas value={mfaData.otpAuthUri} size={200} />
+          </div>
 
           {mfaData.recoveryCodes && (
             <div style={{ backgroundColor: '#f0f0f0', padding: '10px', margin: '10px 0' }}>
