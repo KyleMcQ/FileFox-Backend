@@ -86,6 +86,12 @@ This project uses Amazon RDS for SQL Server for persistent storage of metadata a
 ### 3. Run the Application
 The application is configured to automatically create the database schema on startup using `db.Database.EnsureCreated()`. No manual migrations are required for the initial setup.
 
+### 4. Troubleshooting Connection Issues
+If the application fails to start with a database connection error:
+- **No such host is known**: Double-check the `Server` address in your connection string. It should match the Endpoint provided in the AWS Console.
+- **Connection Timed Out**: Ensure your AWS RDS Security Group allows inbound traffic on port `1433`. If you are running locally, you may need to add your public IP address to the allowed list.
+- **SSL/TLS errors**: Ensure `TrustServerCertificate=True` is included in the connection string if you are using self-signed certificates or RDS default certificates without installing them locally.
+
 ## Security
 - **Authentication**: JWT Bearer tokens are required for all file operations.
 - **Authorization**: Users can only access their own files.

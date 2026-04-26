@@ -140,8 +140,40 @@ var app = builder.Build();
 // -------------------- DATABASE AUTO-MIGRATION/CREATION --------------------
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.EnsureCreated();
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var connectionString = config.GetConnectionString("DefaultConnection");
+
+    if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("YOUR_AWS_RDS_ENDPOINT"))
+    {
+        Console.WriteLine("********************************************************************************");
+        Console.WriteLine("ERROR: Database Connection String is not configured.");
+        Console.WriteLine("Please update 'DefaultConnection' in appsettings.json with your AWS RDS details.");
+        Console.WriteLine("Refer to the README.md for setup instructions.");
+        Console.WriteLine("********************************************************************************");
+        // In a real production app, we might just log this, but for a dev-ready project,
+        // stopping early with a clear message is helpful.
+        return;
+    }
+
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Database.EnsureCreated();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("********************************************************************************");
+        Console.WriteLine("ERROR: Could not connect to the database.");
+        Console.WriteLine($"Message: {ex.Message}");
+        Console.WriteLine();
+        Console.WriteLine("Troubleshooting steps:");
+        Console.WriteLine("1. Verify your connection string in appsettings.json.");
+        Console.WriteLine("2. Ensure your AWS RDS instance is running.");
+        Console.WriteLine("3. Check AWS Security Groups to allow port 1433 from your IP.");
+        Console.WriteLine("4. Ensure 'TrustServerCertificate=True' is in your connection string.");
+        Console.WriteLine("********************************************************************************");
+        return;
+    }
 }
 
 // -------------------- MIDDLEWARE --------------------
