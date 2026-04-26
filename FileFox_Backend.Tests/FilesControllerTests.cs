@@ -28,7 +28,8 @@ public class FilesControllerTests
         using var db = GetInMemoryDb();
         var blob = new InMemoryBlobStorage();
         var fileStore = new InMemoryFileStore(db, blob);
-        var controller = new FilesController(db, blob, fileStore);
+        var audit = new AuditService(db);
+        var controller = new FilesController(db, blob, fileStore, audit);
 
         // Mock user identity
         var userId = Guid.NewGuid().ToString();
@@ -76,7 +77,8 @@ public class FilesControllerTests
         using var db = GetInMemoryDb();
         var blob = new InMemoryBlobStorage();
         var fileStore = new InMemoryFileStore(db, blob);
-        var controller = new FilesController(db, blob, fileStore);
+        var audit = new AuditService(db);
+        var controller = new FilesController(db, blob, fileStore, audit);
 
         var userId = Guid.NewGuid();
         var fileId = Guid.NewGuid();
@@ -112,7 +114,8 @@ public class FilesControllerTests
         using var db = GetInMemoryDb();
         var blob = new InMemoryBlobStorage();
         var fileStore = new InMemoryFileStore(db, blob);
-        var controller = new FilesController(db, blob, fileStore);
+        var audit = new AuditService(db);
+        var controller = new FilesController(db, blob, fileStore, audit);
 
         var userId = Guid.NewGuid();
         var fileId = Guid.NewGuid();

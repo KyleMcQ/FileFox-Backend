@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using FileFox_Backend.Infrastructure.Data;
 using FileFox_Backend.Core.Models;
 using FileFox_Backend.Infrastructure.Extensions;
@@ -12,6 +13,7 @@ namespace FileFox_Backend.Controllers;
 [ApiController]
 [Route("keys")]
 [Authorize]
+[EnableRateLimiting("api")]
 public class KeyController : ControllerBase
 {
     private readonly ApplicationDbContext _dbContext;

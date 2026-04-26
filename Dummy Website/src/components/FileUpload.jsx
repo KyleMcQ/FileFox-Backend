@@ -6,6 +6,7 @@ const CHUNK_SIZE = 1024 * 1024; // 1MB
 
 const FileUpload = ({ onUploadSuccess, keys }) => {
   const [file, setFile] = useState(null);
+  const [extraMetadata, setExtraMetadata] = useState('');
   const [uploading, setUploading] = useState(false);
 
   const handleDirectUpload = async (e) => {
@@ -15,6 +16,10 @@ const FileUpload = ({ onUploadSuccess, keys }) => {
     setUploading(true);
     const formData = new FormData();
     formData.append('file', file);
+    if (extraMetadata) {
+      formData.append('encryptedMetadata', btoa(extraMetadata)); // Simplified simulation
+    }
+    formData.append('recoveryWrappedKey', 'SIMULATED_RECOVERY_KEY_WRAPPED');
 
     try {
       await api.post('/files/upload', formData, {
@@ -47,8 +52,10 @@ const FileUpload = ({ onUploadSuccess, keys }) => {
       // 4. Init
       const { data } = await api.post('/files/init', {
         encryptedFileName: file.name, // In real app, encrypt this too
+        encryptedMetadata: extraMetadata ? btoa(extraMetadata) : null,
         encryptedManifestHeader: manifestHeader,
         wrappedFileKey,
+        recoveryWrappedKey: 'SIMULATED_RECOVERY_KEY_WRAPPED',
         chunkSize: CHUNK_SIZE,
         totalSize: file.size,
         contentType: file.type,
@@ -94,6 +101,15 @@ const FileUpload = ({ onUploadSuccess, keys }) => {
     <div className="file-upload">
       <h3>Upload File</h3>
       <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+      <div style={{ marginTop: '10px' }}>
+        <input
+          type="text"
+          placeholder="Extra Metadata (Tags, etc.)"
+          value={extraMetadata}
+          onChange={(e) => setExtraMetadata(e.target.value)}
+          style={{ width: '100%', marginBottom: '5px' }}
+        />
+      </div>
       <div style={{ marginTop: '10px' }}>
         <button onClick={handleDirectUpload} disabled={uploading}>
           {uploading ? 'Uploading...' : 'Direct Upload (Simple)'}

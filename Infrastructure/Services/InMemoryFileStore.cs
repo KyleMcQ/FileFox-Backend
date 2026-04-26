@@ -18,7 +18,7 @@ public class InMemoryFileStore : IFileStore
         _blob = blob;
     }
 
-    public async Task<Guid> SaveAsync(Guid userId, IFormFile file, CancellationToken ct = default)
+    public async Task<Guid> SaveAsync(Guid userId, IFormFile file, string? encryptedMetadata = null, string? recoveryWrappedKey = null, string? wrappedFileKey = null, CancellationToken ct = default)
     {
         var fileId = Guid.NewGuid();
 
@@ -30,15 +30,27 @@ public class InMemoryFileStore : IFileStore
             Id = fileId,
             UserId = userId,
             EncryptedFileName = file.FileName,
+            EncryptedMetadata = encryptedMetadata,
             ContentType = file.ContentType,
             TotalSize = file.Length,
             ChunkSize = (int)file.Length,
             CryptoVersion = "v1-simple",
             ManifestBlobPath = string.Empty,
-            UploadedAt = DateTimeOffset.UtcNow
+            UploadedAt = DateTimeOffset.UtcNow,
+            RecoveryWrappedKey = recoveryWrappedKey
         };
 
         _db.Files.Add(record);
+
+        if (!string.IsNullOrEmpty(wrappedFileKey))
+        {
+            _db.FileKeys.Add(new FileKey
+            {
+                FileRecordId = fileId,
+                WrappedFileKey = wrappedFileKey
+            });
+        }
+
         await _db.SaveChangesAsync(ct);
 
         return fileId;

@@ -5,26 +5,31 @@ using FileFox_Backend.Infrastructure.Extensions;
 using FileFox_Backend.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 using FileFox_Backend.Core.Interfaces;
 namespace FileFox_Backend.Controllers;
 
 [ApiController]
 [Route("auth")]
+[EnableRateLimiting("auth")]
 public class AuthController : ControllerBase
 {
     private readonly IUserStore _users;
     private readonly ITokenService _tokens;
     private readonly RefreshTokenService _refreshTokens;
+    private readonly AuditService _audit;
 
     public AuthController(
         IUserStore users,
         ITokenService tokens,
-        RefreshTokenService refreshTokens)
+        RefreshTokenService refreshTokens,
+        AuditService audit)
     {
         _users = users;
         _tokens = tokens;
         _refreshTokens = refreshTokens;
+        _audit = audit;
     }
 
     // ---------------- REGISTER ----------------
@@ -40,6 +45,8 @@ public class AuthController : ControllerBase
 
         if (!created)
             return Conflict(new { error });
+
+        await _audit.LogAsync(user!.Id, "User Registered");
 
         var token = _tokens.CreateToken(user!);
 
@@ -72,6 +79,8 @@ public class AuthController : ControllerBase
             });
         }
 
+        await _audit.LogAsync(user.Id, "User Logged In");
+
         return Ok(new
         {
             AccessToken = _tokens.CreateToken(user),
@@ -101,6 +110,57 @@ public class AuthController : ControllerBase
         var totp = new OtpNet.Totp(OtpNet.Base32Encoding.ToBytes(user.MfaSecret));
         if (!totp.VerifyTotp(req.Code, out _, new OtpNet.VerificationWindow(1, 1)))
             return Unauthorized(new { error = "Invalid MFA code" });
+
+        var accessToken = _tokens.CreateToken(user);
+        var refreshToken = await _refreshTokens.GenerateTokenAsync(user.Id);
+
+        return Ok(new
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken.Token
+        });
+    }
+
+    // ---------------- LOGIN (RECOVERY) ----------------
+    [AllowAnonymous]
+    [HttpPost("login/recovery")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> LoginWithRecoveryCode([FromBody] RecoveryLoginRequest req)
+    {
+        var principal = _tokens.ValidateMfaToken(req.MfaToken);
+        if (principal == null)
+            return Unauthorized(new { error = "Invalid or expired MFA token" });
+
+        var userIdString = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdString, out var userId))
+            return Unauthorized();
+
+        var (found, user) = await _users.TryGetByIdAsync(userId);
+        if (!found || user == null || !user.MfaEnabled || user.MfaRecoveryCodes == null)
+            return Unauthorized(new { error = "User not found or MFA recovery not available" });
+
+        var hashedCodes = user.MfaRecoveryCodes.Split(',').ToList();
+        string? matchedHashedCode = null;
+
+        foreach (var hashedCode in hashedCodes)
+        {
+            if (BCrypt.Net.BCrypt.Verify(req.RecoveryCode, hashedCode))
+            {
+                matchedHashedCode = hashedCode;
+                break;
+            }
+        }
+
+        if (matchedHashedCode == null)
+            return Unauthorized(new { error = "Invalid recovery code" });
+
+        // Remove the used code
+        hashedCodes.Remove(matchedHashedCode);
+        user.MfaRecoveryCodes = string.Join(",", hashedCodes);
+        await _users.UpdateAsync(user);
+
+        await _audit.LogAsync(user.Id, "User Logged In (Recovery Code)");
 
         var accessToken = _tokens.CreateToken(user);
         var refreshToken = await _refreshTokens.GenerateTokenAsync(user.Id);
@@ -154,13 +214,18 @@ public class AuthController : ControllerBase
         user.MfaSecret = OtpNet.Base32Encoding.ToString(secret);
         user.MfaEnabled = false;
 
+        // Generate recovery codes
+        var recoveryCodes = Enumerable.Range(0, 10).Select(_ => Guid.NewGuid().ToString("N")[..12]).ToList();
+        user.MfaRecoveryCodes = string.Join(",", recoveryCodes.Select(c => BCrypt.Net.BCrypt.HashPassword(c)));
+
         await _users.UpdateAsync(user);
 
         return Ok(new
         {
             base32Secret = user.MfaSecret,
             otpAuthUri =
-                $"otpauth://totp/FileFox:{user.Email}?secret={user.MfaSecret}&issuer=FileFox"
+                $"otpauth://totp/FileFox:{user.Email}?secret={user.MfaSecret}&issuer=FileFox",
+            recoveryCodes = recoveryCodes
         });
     }
 
