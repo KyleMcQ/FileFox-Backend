@@ -117,6 +117,8 @@ const Dashboard = ({ onLogout }) => {
         <thead>
           <tr>
             <th>Name</th>
+            <th>Metadata (Enc)</th>
+            <th>Recovery</th>
             <th>Size</th>
             <th>Uploaded</th>
             <th>Actions</th>
@@ -125,7 +127,13 @@ const Dashboard = ({ onLogout }) => {
         <tbody>
           {files.map(f => (
             <tr key={f.id}>
-              <td>{f.fileName} (Encrypted)</td>
+              <td>{f.fileName} (Enc)</td>
+              <td>
+                {f.encryptedMetadata ? (
+                  <span title="Decrypted would go here">{atob(f.encryptedMetadata)}</span>
+                ) : '-'}
+              </td>
+              <td>{f.recoveryWrappedKey ? '✅' : '-'}</td>
               <td>{(f.length / 1024).toFixed(2)} KB</td>
               <td>{new Date(f.uploadedAt).toLocaleString()}</td>
               <td>

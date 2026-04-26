@@ -34,6 +34,16 @@ const Mfa = () => {
           <p>Secret: {mfaData.base32Secret}</p>
           <p>Scan the QR code or enter the secret in your authenticator app.</p>
           <p><i>(In a real app, show QR from {mfaData.otpAuthUri})</i></p>
+
+          {mfaData.recoveryCodes && (
+            <div style={{ backgroundColor: '#f0f0f0', padding: '10px', margin: '10px 0' }}>
+              <h4>Recovery Codes (Save these!)</h4>
+              <ul style={{ textAlign: 'left' }}>
+                {mfaData.recoveryCodes.map((c, i) => <li key={i}><code>{c}</code></li>)}
+              </ul>
+            </div>
+          )}
+
           <input type="text" placeholder="Enter 6-digit code" value={code} onChange={(e) => setCode(e.target.value)} />
           <button onClick={verifyMfa}>Verify & Enable</button>
         </div>

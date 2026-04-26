@@ -9,6 +9,7 @@ const Auth = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [mfaToken, setMfaToken] = useState(null);
   const [mfaCode, setMfaCode] = useState('');
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
   const [error, setError] = useState('');
 
   const handleRegister = async (e) => {
@@ -56,24 +57,39 @@ const Auth = ({ onLogin }) => {
   const handleMfaLogin = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await api.post('/auth/login/mfa', { mfaToken, code: mfaCode });
+      let response;
+      if (useRecoveryCode) {
+        response = await api.post('/auth/login/recovery', { mfaToken, recoveryCode: mfaCode });
+      } else {
+        response = await api.post('/auth/login/mfa', { mfaToken, code: mfaCode });
+      }
+      const { data } = response;
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
       localStorage.setItem('userPassword', password);
       onLogin();
     } catch (err) {
-      setError('MFA Validation failed');
+      setError(useRecoveryCode ? 'Recovery code validation failed' : 'MFA Validation failed');
     }
   };
 
   if (mfaToken) {
     return (
       <div className="auth-container">
-        <h2>Enter MFA Code</h2>
+        <h2>{useRecoveryCode ? 'Enter Recovery Code' : 'Enter MFA Code'}</h2>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
         <form onSubmit={handleMfaLogin}>
-          <input type="text" placeholder="6-digit code" value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} />
+          <input
+            type="text"
+            placeholder={useRecoveryCode ? "Recovery Code" : "6-digit code"}
+            value={mfaCode}
+            onChange={(e) => setMfaCode(e.target.value)}
+          />
           <button type="submit">Verify</button>
         </form>
+        <button onClick={() => { setUseRecoveryCode(!useRecoveryCode); setError(''); }}>
+          {useRecoveryCode ? 'Use TOTP Code' : 'Use Recovery Code'}
+        </button>
       </div>
     );
   }
