@@ -4,21 +4,32 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using FileFox_Backend.Infrastructure.Services;
+using FileFox_Backend.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace FileFox_Backend.Tests;
 
 public class BlobStorageTests
 {
-    private InMemoryBlobStorage GetBlobStorage()
+    private ApplicationDbContext GetInMemoryDb()
     {
-        return new InMemoryBlobStorage();
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new ApplicationDbContext(options);
+    }
+
+    private SqlBlobStorage GetBlobStorage(ApplicationDbContext db)
+    {
+        return new SqlBlobStorage(db);
     }
 
     [Fact]
     public async Task PutAndGetChunk_Works()
     {
-        var blob = GetBlobStorage();
+        using var db = GetInMemoryDb();
+        var blob = GetBlobStorage(db);
         var fileId = Guid.NewGuid();
         var chunkData = Encoding.UTF8.GetBytes("test chunk data");
 
@@ -36,7 +47,8 @@ public class BlobStorageTests
     [Fact]
     public async Task PutAndGetManifest_Works()
     {
-        var blob = GetBlobStorage();
+        using var db = GetInMemoryDb();
+        var blob = GetBlobStorage(db);
         var fileId = Guid.NewGuid();
         var manifestData = Encoding.UTF8.GetBytes("manifest content");
 

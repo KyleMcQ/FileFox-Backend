@@ -23,14 +23,14 @@ builder.Services.AddSingleton<ISecretProvider, LocalSecretProvider>();
 
 // -------------------- DATABASE --------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("FileFoxMemoryDb"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // -------------------- SERVICES --------------------
 builder.Services.AddScoped<IUserStore, EFCoreUserStore>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
-builder.Services.AddSingleton<IBlobStorageService, InMemoryBlobStorage>();
-builder.Services.AddScoped<IFileStore, InMemoryFileStore>();
+builder.Services.AddScoped<IBlobStorageService, SqlBlobStorage>();
+builder.Services.AddScoped<IFileStore, DbFileStore>();
 builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<IAuthorizationHandler, FileOwnerHandler>();
@@ -136,6 +136,13 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// -------------------- DATABASE AUTO-MIGRATION/CREATION --------------------
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.EnsureCreated();
+}
 
 // -------------------- MIDDLEWARE --------------------
 if (app.Environment.IsDevelopment())

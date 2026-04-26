@@ -51,6 +51,41 @@ If you already have an account:
 3. **Download Manifest**: Call **`GET /files/{id}/manifest`** to retrieve the encrypted manifest.
 4. **Download Chunks**: Call **`GET /files/{id}/chunks/{index}`** to retrieve the encrypted data chunks.
 
+## AWS RDS SQL Server Setup
+
+This project uses Amazon RDS for SQL Server for persistent storage of metadata and encrypted file blobs. Follow these steps to set it up:
+
+### 1. Create an RDS Instance
+1. Log in to your **AWS Management Console**.
+2. Navigate to **RDS** and click **"Create database"**.
+3. Choose **"Standard create"**.
+4. Engine options: **Microsoft SQL Server**.
+5. Edition: **SQL Server Express** (Free Tier eligible).
+6. Templates: **Free tier** (if applicable).
+7. Settings:
+   - **DB instance identifier**: `filefox-db`
+   - **Master username**: `admin`
+   - **Master password**: *Choose a strong password*
+8. Connectivity:
+   - **Public access**: **Yes** (if you want to access it from outside AWS VPC, ensure security groups allow port 1433).
+   - **VPC security group**: Create new or choose existing. Ensure it allows inbound traffic on port **1433**.
+9. Click **"Create database"**.
+
+### 2. Configure Connection String
+1. Once the RDS instance is "Available", click on it to see the **Endpoint**.
+2. Open `appsettings.json` in the root of the project.
+3. Update the `DefaultConnection` string:
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Server=YOUR_RDS_ENDPOINT,1433;Database=FileFoxDb;User Id=admin;Password=YOUR_PASSWORD;TrustServerCertificate=True"
+   }
+   ```
+   - Replace `YOUR_RDS_ENDPOINT` with the endpoint from the AWS console.
+   - Replace `YOUR_PASSWORD` with the master password you set.
+
+### 3. Run the Application
+The application is configured to automatically create the database schema on startup using `db.Database.EnsureCreated()`. No manual migrations are required for the initial setup.
+
 ## Security
 - **Authentication**: JWT Bearer tokens are required for all file operations.
 - **Authorization**: Users can only access their own files.
