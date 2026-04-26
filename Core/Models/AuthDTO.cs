@@ -48,3 +48,9 @@ public class MfaCompleteRequest
     public required string MfaToken { get; set; }
     public required string Code { get; set; }
 }
+
+public class RecoveryLoginRequest
+{
+    public required string MfaToken { get; set; }
+    public required string RecoveryCode { get; set; }
+}

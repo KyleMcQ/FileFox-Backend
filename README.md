@@ -55,3 +55,9 @@ If you already have an account:
 - **Authentication**: JWT Bearer tokens are required for all file operations.
 - **Authorization**: Users can only access their own files.
 - **Encryption**: Files are expected to be encrypted client-side. The backend only stores ciphertext.
+- **Metadata Encryption**: Clients can now provide `EncryptedMetadata` during file initialization. This field is stored as ciphertext on the server, ensuring even file-related metadata is private.
+- **MFA Recovery**: When setting up MFA, the server provides 10 single-use recovery codes. These codes are hashed (using BCrypt) before being stored. Use the `POST /auth/login/recovery` endpoint if you lose access to your TOTP device.
+- **File Recovery**: The `RecoveryWrappedKey` field allows storing a file key wrapped with a recovery public key, providing a secondary way to access files if primary keys are lost.
+- **Rate Limiting**: API endpoints are protected by rate limiting. The `auth` endpoints are limited to 10 requests per minute, and other `api` endpoints are limited to 100 requests per minute.
+- **Security Headers**: The API uses security headers (HSTS, CSP, etc.) to harden the server against common web attacks.
+- **Auditing**: Critical actions like logins and file deletions are logged for security auditing.

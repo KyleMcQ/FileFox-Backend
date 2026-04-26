@@ -55,6 +55,7 @@ For large files or resilient uploads, use the chunked upload flow.
 
 1. **Initialize**: `POST /files/init`.
    - Send `EncryptedFileName`, `TotalSize`, `ChunkSize`, and a `WrappedFileKey` (the file's AES key encrypted with your public key).
+   - You can also send `EncryptedMetadata` and `RecoveryWrappedKey`.
    - Also send an `EncryptedManifestHeader` which contains encryption metadata (IVs, nonces, etc.).
    - Receive a `fileId`.
 2. **Upload Chunks**: Loop through your file chunks and call `PUT /files/{fileId}/chunks/{index}`.
@@ -87,6 +88,7 @@ Base Route: `/auth`
 | `/register` | POST | Anonymous | Registers a new user. |
 | `/login` | POST | Anonymous | Step 1: Returns JWT or MFA requirement. |
 | `/login/mfa` | POST | Anonymous | Step 2: Validates MFA code and returns JWT. |
+| `/login/recovery` | POST | Anonymous | Step 2 Alt: Validates MFA Recovery Code and returns JWT. |
 | `/refresh` | POST | Anonymous | Rotates Refresh and Access tokens. |
 | `/mfa/setup` | POST | Authorized | Generates a new MFA secret. |
 | `/mfa/verify` | POST | Authorized | Verifies and enables MFA. |
