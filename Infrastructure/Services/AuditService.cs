@@ -19,7 +19,7 @@ public class AuditService
             Id = Guid.NewGuid(),
             UserId = userId,
             Action = action,
-            FileRecordId = fileId ?? Guid.Empty,
+            FileRecordId = fileId,
             Timestamp = DateTimeOffset.UtcNow
         };
 
