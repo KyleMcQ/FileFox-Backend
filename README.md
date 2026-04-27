@@ -91,6 +91,7 @@ If the application fails to start with a database connection error:
 - **No such host is known**: Double-check the `Server` address in your connection string. It should match the Endpoint provided in the AWS Console.
 - **Connection Timed Out**: Ensure your AWS RDS Security Group allows inbound traffic on port `1433`. If you are running locally, you may need to add your public IP address to the allowed list.
 - **SSL/TLS errors**: Ensure `TrustServerCertificate=True` is included in the connection string if you are using self-signed certificates or RDS default certificates without installing them locally.
+- **Foreign Key / NULL Errors**: If you encounter errors like `Cannot insert the value NULL into column 'FileRecordId'`, it means your database schema was created before the recent update. Since we use `EnsureCreated()`, you must **drop the `AuditLogs` table** (or the entire database) and restart the application to let it recreate the schema correctly.
 
 ## Security
 - **Authentication**: JWT Bearer tokens are required for all file operations.

@@ -27,6 +27,15 @@ namespace FileFox_Backend.Infrastructure.Data
                 .HasOne(k => k.FileRecord)
                 .WithMany(f => f.Keys)
                 .HasForeignKey(k => k.FileRecordId);
+
+            modelBuilder.Entity<AuditLog>(entity =>
+            {
+                entity.HasOne(a => a.FileRecord)
+                    .WithMany()
+                    .HasForeignKey(a => a.FileRecordId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
         }
     }
 }
