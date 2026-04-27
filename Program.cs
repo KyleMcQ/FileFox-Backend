@@ -23,14 +23,14 @@ builder.Services.AddSingleton<ISecretProvider, LocalSecretProvider>();
 
 // -------------------- DATABASE --------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("FileFoxMemoryDb"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // -------------------- SERVICES --------------------
 builder.Services.AddScoped<IUserStore, EFCoreUserStore>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
-builder.Services.AddSingleton<IBlobStorageService, InMemoryBlobStorage>();
-builder.Services.AddScoped<IFileStore, InMemoryFileStore>();
+builder.Services.AddScoped<IBlobStorageService, SqlBlobStorage>();
+builder.Services.AddScoped<IFileStore, DbFileStore>();
 builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<IAuthorizationHandler, FileOwnerHandler>();
@@ -136,6 +136,50 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// -------------------- DATABASE AUTO-MIGRATION/CREATION --------------------
+using (var scope = app.Services.CreateScope())
+{
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var connectionString = config.GetConnectionString("DefaultConnection");
+
+    if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("YOUR_AWS_RDS_ENDPOINT"))
+    {
+        Console.WriteLine("********************************************************************************");
+        Console.WriteLine("ERROR: Database Connection String is not configured.");
+        Console.WriteLine("Please update 'DefaultConnection' in appsettings.json with your AWS RDS details.");
+        Console.WriteLine("Refer to the README.md for setup instructions.");
+        Console.WriteLine("********************************************************************************");
+        // In a real production app, we might just log this, but for a dev-ready project,
+        // stopping early with a clear message is helpful.
+        return;
+    }
+
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Database.EnsureCreated();
+
+        // Self-healing: Ensure AuditLogs.FileRecordId is nullable in case it was created NOT NULL
+        try {
+            db.Database.ExecuteSqlRaw("ALTER TABLE AuditLogs ALTER COLUMN FileRecordId UNIQUEIDENTIFIER NULL");
+        } catch { /* Table might not exist or column already nullable */ }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("********************************************************************************");
+        Console.WriteLine("ERROR: Could not connect to the database.");
+        Console.WriteLine($"Message: {ex.Message}");
+        Console.WriteLine();
+        Console.WriteLine("Troubleshooting steps:");
+        Console.WriteLine("1. Verify your connection string in appsettings.json.");
+        Console.WriteLine("2. Ensure your AWS RDS instance is running.");
+        Console.WriteLine("3. Check AWS Security Groups to allow port 1433 from your IP.");
+        Console.WriteLine("4. Ensure 'TrustServerCertificate=True' is in your connection string.");
+        Console.WriteLine("********************************************************************************");
+        return;
+    }
+}
 
 // -------------------- MIDDLEWARE --------------------
 if (app.Environment.IsDevelopment())

@@ -17,6 +17,7 @@ namespace FileFox_Backend.Infrastructure.Data
         public DbSet<FileKey> FileKeys { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<UserKeyPair> UserKeyPairs { get; set; } = null!;
+        public DbSet<BlobData> Blobs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -26,6 +27,15 @@ namespace FileFox_Backend.Infrastructure.Data
                 .HasOne(k => k.FileRecord)
                 .WithMany(f => f.Keys)
                 .HasForeignKey(k => k.FileRecordId);
+
+            modelBuilder.Entity<AuditLog>(entity =>
+            {
+                entity.HasOne(a => a.FileRecord)
+                    .WithMany()
+                    .HasForeignKey(a => a.FileRecordId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
         }
     }
 }

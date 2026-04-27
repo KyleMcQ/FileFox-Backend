@@ -26,8 +26,8 @@ public class FilesControllerTests
     public async Task InitUpload_CreatesFileRecordAndManifest()
     {
         using var db = GetInMemoryDb();
-        var blob = new InMemoryBlobStorage();
-        var fileStore = new InMemoryFileStore(db, blob);
+        var blob = new SqlBlobStorage(db);
+        var fileStore = new DbFileStore(db, blob);
         var audit = new AuditService(db);
         var controller = new FilesController(db, blob, fileStore, audit);
 
@@ -75,8 +75,8 @@ public class FilesControllerTests
     public async Task GetMetadata_IncludesKeys()
     {
         using var db = GetInMemoryDb();
-        var blob = new InMemoryBlobStorage();
-        var fileStore = new InMemoryFileStore(db, blob);
+        var blob = new SqlBlobStorage(db);
+        var fileStore = new DbFileStore(db, blob);
         var audit = new AuditService(db);
         var controller = new FilesController(db, blob, fileStore, audit);
 
@@ -112,8 +112,8 @@ public class FilesControllerTests
     public async Task Download_ReturnsFileStream_ForSimpleFile()
     {
         using var db = GetInMemoryDb();
-        var blob = new InMemoryBlobStorage();
-        var fileStore = new InMemoryFileStore(db, blob);
+        var blob = new SqlBlobStorage(db);
+        var fileStore = new DbFileStore(db, blob);
         var audit = new AuditService(db);
         var controller = new FilesController(db, blob, fileStore, audit);
 
