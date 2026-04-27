@@ -159,6 +159,11 @@ using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Database.EnsureCreated();
+
+        // Self-healing: Ensure AuditLogs.FileRecordId is nullable in case it was created NOT NULL
+        try {
+            db.Database.ExecuteSqlRaw("ALTER TABLE AuditLogs ALTER COLUMN FileRecordId UNIQUEIDENTIFIER NULL");
+        } catch { /* Table might not exist or column already nullable */ }
     }
     catch (Exception ex)
     {
