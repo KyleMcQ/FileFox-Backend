@@ -220,11 +220,15 @@ public class AuthController : ControllerBase
 
         await _users.UpdateAsync(user);
 
+        var issuer = "FileFox";
+        var encodedIssuer = Uri.EscapeDataString(issuer);
+        var encodedEmail = Uri.EscapeDataString(user.Email);
+
         return Ok(new
         {
             base32Secret = user.MfaSecret,
             otpAuthUri =
-                $"otpauth://totp/FileFox:{user.Email}?secret={user.MfaSecret}&issuer=FileFox",
+                $"otpauth://totp/{encodedIssuer}:{encodedEmail}?secret={user.MfaSecret}&issuer={encodedIssuer}",
             recoveryCodes = recoveryCodes
         });
     }
@@ -241,7 +245,7 @@ public class AuthController : ControllerBase
         if (user?.MfaSecret == null) return BadRequest();
 
         var totp = new OtpNet.Totp(OtpNet.Base32Encoding.ToBytes(user.MfaSecret));
-        if (!totp.VerifyTotp(req.Code, out _))
+        if (!totp.VerifyTotp(req.Code, out _, new OtpNet.VerificationWindow(1, 1)))
             return Unauthorized();
 
         user.MfaEnabled = true;
