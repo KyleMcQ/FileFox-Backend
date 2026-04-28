@@ -254,4 +254,44 @@ public class AuthController : ControllerBase
         await _users.UpdateAsync(user);
         return Ok();
     }
+
+    // ---------------- ME ----------------
+    [Authorize]
+    [HttpGet("me")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetMe()
+    {
+        var userId = User.GetUserId();
+        var (found, user) = await _users.TryGetByIdAsync(userId);
+
+        if (!found || user == null)
+            return Unauthorized();
+
+        return Ok(new UserInfoResponse
+        {
+            UserName = user.UserName,
+            Email = user.Email,
+            MfaEnabled = user.MfaEnabled
+        });
+    }
+
+    // ---------------- MFA DISABLE ----------------
+    [Authorize]
+    [HttpPost("mfa/disable")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> DisableMfa()
+    {
+        var userId = User.GetUserId();
+        var (_, user) = await _users.TryGetByIdAsync(userId);
+        if (user == null) return Unauthorized();
+
+        user.MfaEnabled = false;
+        user.MfaSecret = null;
+        user.MfaRecoveryCodes = null;
+
+        await _users.UpdateAsync(user);
+        return Ok();
+    }
 }

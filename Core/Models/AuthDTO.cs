@@ -74,3 +74,15 @@ public class RecoveryLoginRequest
     [JsonPropertyName("recoveryCode")]
     public required string RecoveryCode { get; set; }
 }
+
+public class UserInfoResponse
+{
+    [JsonPropertyName("userName")]
+    public required string UserName { get; set; }
+
+    [JsonPropertyName("email")]
+    public required string Email { get; set; }
+
+    [JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; }
+}

@@ -76,6 +76,9 @@ public class DbFileStore : IFileStore
         var record = await GetAsync(userId, fileId);
         if (record == null) return false;
 
+        // Delete associated blobs first
+        await _blob.DeleteAllChunksAsync(fileId);
+
         _db.Files.Remove(record);
         await _db.SaveChangesAsync();
         return true;

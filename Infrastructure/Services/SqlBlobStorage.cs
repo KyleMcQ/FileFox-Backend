@@ -58,4 +58,11 @@ public class SqlBlobStorage : IBlobStorageService
     {
         return await GetChunkAsync(fileId, -1);
     }
+
+    public async Task DeleteAllChunksAsync(Guid fileId)
+    {
+        var blobs = await _db.Blobs.Where(b => b.FileId == fileId).ToListAsync();
+        _db.Blobs.RemoveRange(blobs);
+        await _db.SaveChangesAsync();
+    }
 }

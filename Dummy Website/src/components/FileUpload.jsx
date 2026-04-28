@@ -27,6 +27,8 @@ const FileUpload = ({ onUploadSuccess, keys }) => {
       });
       alert('File uploaded successfully (Direct)');
       onUploadSuccess();
+      setFile(null);
+      setExtraMetadata('');
     } catch (err) {
       alert('Direct upload failed');
     } finally {
@@ -46,7 +48,6 @@ const FileUpload = ({ onUploadSuccess, keys }) => {
       const wrappedFileKey = await wrapFileKey(fileKey, keys.publicKey);
 
       // 3. Prepare "Manifest" (Simplified: we'll just send the IV for the first chunk as a header placeholder)
-      // In a real app, you'd store IVs for all chunks.
       const manifestHeader = btoa(JSON.stringify({ version: 'v1', chunks: Math.ceil(file.size / CHUNK_SIZE) }));
 
       // 4. Init
@@ -89,6 +90,8 @@ const FileUpload = ({ onUploadSuccess, keys }) => {
 
       alert('Chunked upload completed!');
       onUploadSuccess();
+      setFile(null);
+      setExtraMetadata('');
     } catch (err) {
       console.error(err);
       alert('Chunked upload failed');
@@ -99,24 +102,47 @@ const FileUpload = ({ onUploadSuccess, keys }) => {
 
   return (
     <div className="file-upload">
-      <h3>Upload File</h3>
-      <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-      <div style={{ marginTop: '10px' }}>
-        <input
-          type="text"
-          placeholder="Extra Metadata (Tags, etc.)"
-          value={extraMetadata}
-          onChange={(e) => setExtraMetadata(e.target.value)}
-          style={{ width: '100%', marginBottom: '5px' }}
-        />
-      </div>
-      <div style={{ marginTop: '10px' }}>
-        <button onClick={handleDirectUpload} disabled={uploading}>
-          {uploading ? 'Uploading...' : 'Direct Upload (Simple)'}
-        </button>
-        <button onClick={handleChunkedUpload} disabled={uploading} style={{ marginLeft: '10px' }}>
-          {uploading ? 'Uploading...' : 'Secure Chunked Upload'}
-        </button>
+      <div className="row g-3 align-items-end">
+        <div className="col-md-4">
+          <label className="form-label">Select File</label>
+          <input
+            type="file"
+            className="form-control"
+            onChange={(e) => setFile(e.target.files[0])}
+          />
+        </div>
+        <div className="col-md-4">
+          <label className="form-label">Extra Metadata (Tags, etc.)</label>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="e.g. project-x, confidential"
+            value={extraMetadata}
+            onChange={(e) => setExtraMetadata(e.target.value)}
+          />
+        </div>
+        <div className="col-md-4">
+          <div className="d-flex gap-2">
+            <button
+              className="btn btn-primary flex-grow-1"
+              onClick={handleDirectUpload}
+              disabled={uploading || !file}
+            >
+              {uploading ? (
+                <><span className="spinner-border spinner-border-sm me-2"></span>Direct</>
+              ) : 'Direct Upload'}
+            </button>
+            <button
+              className="btn btn-success flex-grow-1"
+              onClick={handleChunkedUpload}
+              disabled={uploading || !file}
+            >
+              {uploading ? (
+                <><span className="spinner-border spinner-border-sm me-2"></span>Secure</>
+              ) : 'Secure Upload'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

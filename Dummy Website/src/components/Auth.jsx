@@ -39,6 +39,7 @@ const Auth = ({ onLogin }) => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       const { data } = await api.post('/auth/login', { email, password });
       if (data.mfaRequired) {
@@ -56,6 +57,7 @@ const Auth = ({ onLogin }) => {
 
   const handleMfaLogin = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       let response;
       if (useRecoveryCode) {
@@ -75,40 +77,93 @@ const Auth = ({ onLogin }) => {
 
   if (mfaToken) {
     return (
-      <div className="auth-container">
-        <h2>{useRecoveryCode ? 'Enter Recovery Code' : 'Enter MFA Code'}</h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <form onSubmit={handleMfaLogin}>
-          <input
-            type="text"
-            placeholder={useRecoveryCode ? "Recovery Code" : "6-digit code"}
-            value={mfaCode}
-            onChange={(e) => setMfaCode(e.target.value)}
-          />
-          <button type="submit">Verify</button>
-        </form>
-        <button onClick={() => { setUseRecoveryCode(!useRecoveryCode); setError(''); }}>
-          {useRecoveryCode ? 'Use TOTP Code' : 'Use Recovery Code'}
-        </button>
+      <div className="row justify-content-center">
+        <div className="col-md-4">
+          <div className="card shadow">
+            <div className="card-body text-center">
+              <h2 className="card-title h4 mb-3">{useRecoveryCode ? 'Enter Recovery Code' : 'Enter MFA Code'}</h2>
+              {error && <div className="alert alert-danger">{error}</div>}
+              <form onSubmit={handleMfaLogin}>
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder={useRecoveryCode ? "Recovery Code" : "6-digit code"}
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value)}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary w-100 mb-2">Verify</button>
+              </form>
+              <button
+                className="btn btn-link btn-sm"
+                onClick={() => { setUseRecoveryCode(!useRecoveryCode); setError(''); setMfaCode(''); }}
+              >
+                {useRecoveryCode ? 'Use TOTP Code' : 'Use Recovery Code'}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="auth-container">
-      <h2>{isRegister ? 'Register' : 'Login'}</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={isRegister ? handleRegister : handleLogin}>
-        {isRegister && (
-          <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
-        )}
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button type="submit">{isRegister ? 'Register' : 'Login'}</button>
-      </form>
-      <button onClick={() => setIsRegister(!isRegister)}>
-        {isRegister ? 'Have an account? Login' : 'Need an account? Register'}
-      </button>
+    <div className="row justify-content-center">
+      <div className="col-md-5">
+        <div className="card shadow">
+          <div className="card-body">
+            <h2 className="card-title h4 mb-4 text-center">{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
+            {error && <div className="alert alert-danger">{error}</div>}
+            <form onSubmit={isRegister ? handleRegister : handleLogin}>
+              {isRegister && (
+                <div className="mb-3">
+                  <label className="form-label">Username</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="johndoe"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+              <div className="mb-3">
+                <label className="form-label">Email address</label>
+                <input
+                  type="email"
+                  className="form-control"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Password</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <button type="submit" className="btn btn-primary w-100 mb-3">
+                {isRegister ? 'Register' : 'Login'}
+              </button>
+            </form>
+            <div className="text-center">
+              <button className="btn btn-link btn-sm text-decoration-none" onClick={() => { setIsRegister(!isRegister); setError(''); }}>
+                {isRegister ? 'Already have an account? Login' : "Don't have an account? Register"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

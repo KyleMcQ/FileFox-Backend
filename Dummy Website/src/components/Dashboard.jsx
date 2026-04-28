@@ -4,11 +4,14 @@ import { useKeys } from '../hooks/useKeys';
 import { unwrapFileKey, decryptData } from '../crypto';
 import Mfa from './Mfa';
 import FileUpload from './FileUpload';
+import Profile from './Profile';
 
 const Dashboard = ({ onLogout }) => {
   const [files, setFiles] = useState([]);
   const { keys, loading } = useKeys();
   const [showMfa, setShowMfa] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   const fetchFiles = async () => {
     try {
@@ -19,9 +22,26 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
+  const fetchUser = async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      setUser(data);
+    } catch (err) {
+      console.error("Failed to fetch user info", err);
+    }
+  };
+
   useEffect(() => {
-    if (keys) fetchFiles();
+    if (keys) {
+      fetchFiles();
+      fetchUser();
+    }
   }, [keys]);
+
+  const handleMfaUpdate = () => {
+    fetchUser();
+    setShowMfa(false);
+  };
 
   const handleDownloadDirect = async (fileId, fileName) => {
     try {
@@ -40,18 +60,15 @@ const Dashboard = ({ onLogout }) => {
 
   const handleDownloadSecure = async (fileId, fileName, wrappedKeys) => {
     try {
-      // 1. Get Wrapped Key (using the first one for this user)
       const wrappedKey = wrappedKeys[0];
       const fileKey = await unwrapFileKey(wrappedKey, keys.privateKey);
 
-      // 2. Get Metadata (to know how many chunks, though we can just loop)
       const { data: metadata } = await api.get(`/files/${fileId}`);
 
       const decryptedChunks = [];
       let i = 0;
       while (true) {
         try {
-          console.log(`Downloading chunk ${i}...`);
           const response = await api.get(`/files/${fileId}/chunks/${i}`, { responseType: 'arraybuffer' });
           const combined = new Uint8Array(response.data);
 
@@ -63,7 +80,6 @@ const Dashboard = ({ onLogout }) => {
           i++;
         } catch (e) {
           if (e.response?.status === 404 && i > 0) {
-            // Break when no more chunks (404)
             break;
           }
           throw e;
@@ -95,56 +111,100 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
-  if (loading) return <div>Loading Keys...</div>;
-  if (!keys) return <div>Error loading keys. Please re-login. <button onClick={onLogout}>Logout</button></div>;
+  if (loading) return (
+    <div className="d-flex justify-content-center my-5">
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading Keys...</span>
+      </div>
+    </div>
+  );
+
+  if (!keys) return (
+    <div className="alert alert-danger" role="alert">
+      Error loading keys. Please re-login.
+      <button className="btn btn-outline-danger btn-sm ms-3" onClick={onLogout}>Logout</button>
+    </div>
+  );
 
   return (
     <div className="dashboard">
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h2>FileFox Dashboard</h2>
-        <div>
-          <button onClick={() => setShowMfa(!showMfa)}>{showMfa ? 'Close MFA' : 'MFA Settings'}</button>
-          <button onClick={onLogout}>Logout</button>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="h3 mb-0">Dashboard</h2>
+        <div className="btn-group">
+          <button className="btn btn-outline-secondary" onClick={() => setShowProfile(true)}>Profile</button>
+          <button className="btn btn-outline-secondary" onClick={() => setShowMfa(!showMfa)}>
+            {showMfa ? 'Close MFA' : (user?.mfaEnabled ? 'MFA Settings' : 'Enable MFA')}
+          </button>
+          <button className="btn btn-outline-danger" onClick={onLogout}>Logout</button>
         </div>
       </div>
 
-      {showMfa && <Mfa />}
+      {showProfile && <Profile user={user} onClose={() => setShowProfile(false)} />}
 
-      <FileUpload onUploadSuccess={fetchFiles} keys={keys} />
+      {showMfa && (
+        <div className="card mb-4">
+          <div className="card-body">
+            <Mfa mfaEnabled={user?.mfaEnabled} onMfaUpdate={handleMfaUpdate} />
+          </div>
+        </div>
+      )}
 
-      <h3>Your Files</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Metadata (Enc)</th>
-            <th>Recovery</th>
-            <th>Size</th>
-            <th>Uploaded</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {files.map(f => (
-            <tr key={f.id}>
-              <td>{f.fileName} (Enc)</td>
-              <td>
-                {f.encryptedMetadata ? (
-                  <span title="Decrypted would go here">{atob(f.encryptedMetadata)}</span>
-                ) : '-'}
-              </td>
-              <td>{f.recoveryWrappedKey ? '✅' : '-'}</td>
-              <td>{(f.length / 1024).toFixed(2)} KB</td>
-              <td>{new Date(f.uploadedAt).toLocaleString()}</td>
-              <td>
-                <button onClick={() => handleDownloadDirect(f.id, f.fileName)}>Direct</button>
-                <button onClick={() => handleDownloadSecure(f.id, f.fileName, f.wrappedKeys)} style={{ marginLeft: '5px' }}>Secure</button>
-                <button onClick={() => handleDelete(f.id)} style={{ marginLeft: '5px', color: 'red' }}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="card mb-4">
+        <div className="card-header bg-light">
+          <h5 className="mb-0">Upload File</h5>
+        </div>
+        <div className="card-body">
+          <FileUpload onUploadSuccess={fetchFiles} keys={keys} />
+        </div>
+      </div>
+
+      <div className="card shadow-sm">
+        <div className="card-header bg-white">
+          <h5 className="mb-0">Your Files</h5>
+        </div>
+        <div className="table-responsive">
+          <table className="table table-hover align-middle mb-0">
+            <thead className="table-light">
+              <tr>
+                <th>Name</th>
+                <th>Metadata</th>
+                <th>Recovery</th>
+                <th>Size</th>
+                <th>Uploaded</th>
+                <th className="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {files.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-4 text-muted">No files found.</td>
+                </tr>
+              ) : (
+                files.map(f => (
+                  <tr key={f.id}>
+                    <td className="fw-medium">{f.fileName} <span className="badge bg-info text-dark ms-1" style={{fontSize: '0.7rem'}}>Enc</span></td>
+                    <td>
+                      {f.encryptedMetadata ? (
+                        <span className="text-truncate d-inline-block" style={{maxWidth: '150px'}} title={atob(f.encryptedMetadata)}>{atob(f.encryptedMetadata)}</span>
+                      ) : '-'}
+                    </td>
+                    <td>{f.recoveryWrappedKey ? <span className="text-success">✅</span> : <span className="text-muted">-</span>}</td>
+                    <td>{(f.length / 1024).toFixed(2)} KB</td>
+                    <td className="text-muted small">{new Date(f.uploadedAt).toLocaleString()}</td>
+                    <td className="text-end">
+                      <div className="btn-group btn-group-sm">
+                        <button className="btn btn-outline-primary" onClick={() => handleDownloadDirect(f.id, f.fileName)}>Direct</button>
+                        <button className="btn btn-outline-success" onClick={() => handleDownloadSecure(f.id, f.fileName, f.wrappedKeys)}>Secure</button>
+                        <button className="btn btn-outline-danger" onClick={() => handleDelete(f.id)}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
