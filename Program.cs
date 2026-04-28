@@ -14,6 +14,7 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -36,6 +37,7 @@ builder.Services.AddScoped<AuditService>();
 builder.Services.AddScoped<IAuthorizationHandler, FileOwnerHandler>();
 
 builder.Services.AddControllers();
+builder.Services.AddHealthChecks();
 
 // -------------------- RATE LIMITING --------------------
 builder.Services.AddRateLimiter(options =>
@@ -65,6 +67,14 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
+});
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Clearing known networks and proxies since many cloud providers use different IP ranges.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 // -------------------- AUTHORIZATION --------------------
@@ -192,6 +202,8 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
+app.UseForwardedHeaders();
+
 // app.UseHttpsRedirection();
 
 app.UseCors();
@@ -202,6 +214,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 public partial class Program { }

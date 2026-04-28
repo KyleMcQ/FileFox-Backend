@@ -103,3 +103,60 @@ If the application fails to start with a database connection error:
 - **Rate Limiting**: API endpoints are protected by rate limiting. The `auth` endpoints are limited to 10 requests per minute, and other `api` endpoints are limited to 100 requests per minute.
 - **Security Headers**: The API uses security headers (HSTS, CSP, etc.) to harden the server against common web attacks.
 - **Auditing**: Critical actions like logins and file deletions are logged for security auditing.
+
+## Hosting the API
+
+The FileFox-Backend is designed to be hosted as a containerized API. It includes a `Dockerfile` optimized for production and health check endpoints for load balancer integration.
+
+### 1. Build and Run Locally with Docker
+
+If you have Docker installed, you can build and run the API locally to verify the container:
+
+1.  **Build the Image**:
+    ```bash
+    docker build -t filefox-backend .
+    ```
+2.  **Run the Container**:
+    ```bash
+    docker run -d -p 8080:8080 \
+      -e ConnectionStrings__DefaultConnection="Server=YOUR_RDS_ENDPOINT;Database=FileFoxDb;User Id=admin;Password=YOUR_PASSWORD;TrustServerCertificate=True" \
+      --name filefox-api filefox-backend
+    ```
+    - The API will be available at `http://localhost:8080`.
+    - Health checks can be verified at `http://localhost:8080/health`.
+
+### 2. Deploying to AWS (Recommended: App Runner)
+
+AWS App Runner is the easiest way to deploy this containerized API.
+
+#### Step A: Push Image to AWS ECR
+1.  **Create an ECR Repository**:
+    ```bash
+    aws ecr create-repository --repository-name filefox-backend
+    ```
+2.  **Login to ECR**:
+    ```bash
+    aws ecr get-login-password --region your-region | docker login --username AWS --password-stdin your-account-id.dkr.ecr.your-region.amazonaws.com
+    ```
+3.  **Tag and Push**:
+    ```bash
+    docker tag filefox-backend:latest your-account-id.dkr.ecr.your-region.amazonaws.com/filefox-backend:latest
+    docker push your-account-id.dkr.ecr.your-region.amazonaws.com/filefox-backend:latest
+    ```
+
+#### Step B: Create App Runner Service
+1.  Go to the **AWS App Runner Console**.
+2.  Click **"Create service"**.
+3.  **Source**: Choose **"Container registry"** and **"Amazon ECR"**.
+4.  **Image repository**: Select the `filefox-backend` repository and `latest` tag.
+5.  **Deployment settings**: Choose **"Automatic"** if you want to deploy on every push.
+6.  **Configure service**:
+    - **Service name**: `filefox-api-service`
+    - **Port**: `8080`
+    - **Environment variables**: Add `ConnectionStrings__DefaultConnection` with your RDS connection string.
+7.  **Review and Create**.
+
+### 3. Production Considerations
+- **Environment Variables**: Never hardcode secrets. Use AWS Secrets Manager or App Runner Environment Variables to inject connection strings and JWT keys.
+- **Auto-Scaling**: App Runner automatically scales based on traffic.
+- **SSL/TLS**: App Runner provides a managed HTTPS endpoint automatically.

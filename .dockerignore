@@ -1,0 +1,12 @@
+**/.git
+**/.vscode
+**/bin
+**/obj
+**/out
+**/*.user
+**/*.sln
+**/*.http
+appsettings.Development.json
+Dummy Website/
+ValidationTests/
+FileFox_Backend.Tests/
