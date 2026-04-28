@@ -242,11 +242,12 @@ public class FilesController : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         var userId = User.GetUserId();
-        var success = await _fileStore.DeleteAsync(userId, id);
 
-        if (!success) return NotFound();
-
+        // Log before deleting so the FileRecord still exists for the foreign key
         await _audit.LogAsync(userId, "Delete File", id);
+
+        var success = await _fileStore.DeleteAsync(userId, id);
+        if (!success) return NotFound();
 
         return Ok();
     }
