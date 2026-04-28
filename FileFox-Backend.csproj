@@ -11,6 +11,9 @@
     <Compile Remove="FileFox_Backend.Tests/**" />
     <EmbeddedResource Remove="FileFox_Backend.Tests/**" />
     <None Remove="FileFox_Backend.Tests/**" />
+    <Compile Remove="ValidationTests/**" />
+    <EmbeddedResource Remove="ValidationTests/**" />
+    <None Remove="ValidationTests/**" />
   </ItemGroup>
 
   <ItemGroup>
