@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import api from '../api';
 import { QRCodeCanvas } from 'qrcode.react';
 
-const Mfa = () => {
+const Mfa = ({ mfaEnabled, onMfaUpdate }) => {
   const [mfaData, setMfaData] = useState(null);
   const [code, setCode] = useState('');
   const [status, setStatus] = useState('');
@@ -20,15 +20,36 @@ const Mfa = () => {
     try {
       await api.post('/auth/mfa/verify', { code });
       setStatus('MFA Enabled successfully!');
+      setTimeout(() => {
+        onMfaUpdate();
+      }, 1500);
     } catch (err) {
       setStatus('MFA verification failed');
+    }
+  };
+
+  const disableMfa = async () => {
+    if (!window.confirm("Are you sure you want to disable MFA? This will reduce your account security.")) return;
+    try {
+      await api.post('/auth/mfa/disable');
+      setStatus('MFA Disabled successfully!');
+      setTimeout(() => {
+        onMfaUpdate();
+      }, 1500);
+    } catch (err) {
+      setStatus('Failed to disable MFA');
     }
   };
 
   return (
     <div className="mfa-section">
       <h4 className="mb-3">Multi-Factor Authentication</h4>
-      {!mfaData ? (
+      {mfaEnabled && !mfaData ? (
+        <div className="text-center py-3">
+          <p className="text-success fw-bold">MFA is currently enabled.</p>
+          <button className="btn btn-outline-danger" onClick={disableMfa}>Disable MFA</button>
+        </div>
+      ) : !mfaData ? (
         <button className="btn btn-primary" onClick={setupMfa}>Enable MFA</button>
       ) : (
         <div className="row">

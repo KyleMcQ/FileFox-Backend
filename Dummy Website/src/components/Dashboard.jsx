@@ -38,6 +38,11 @@ const Dashboard = ({ onLogout }) => {
     }
   }, [keys]);
 
+  const handleMfaUpdate = () => {
+    fetchUser();
+    setShowMfa(false);
+  };
+
   const handleDownloadDirect = async (fileId, fileName) => {
     try {
       const response = await api.get(`/files/${fileId}/download`, { responseType: 'blob' });
@@ -127,7 +132,9 @@ const Dashboard = ({ onLogout }) => {
         <h2 className="h3 mb-0">Dashboard</h2>
         <div className="btn-group">
           <button className="btn btn-outline-secondary" onClick={() => setShowProfile(true)}>Profile</button>
-          <button className="btn btn-outline-secondary" onClick={() => setShowMfa(!showMfa)}>{showMfa ? 'Close MFA' : 'MFA Settings'}</button>
+          <button className="btn btn-outline-secondary" onClick={() => setShowMfa(!showMfa)}>
+            {showMfa ? 'Close MFA' : (user?.mfaEnabled ? 'MFA Settings' : 'Enable MFA')}
+          </button>
           <button className="btn btn-outline-danger" onClick={onLogout}>Logout</button>
         </div>
       </div>
@@ -137,7 +144,7 @@ const Dashboard = ({ onLogout }) => {
       {showMfa && (
         <div className="card mb-4">
           <div className="card-body">
-            <Mfa />
+            <Mfa mfaEnabled={user?.mfaEnabled} onMfaUpdate={handleMfaUpdate} />
           </div>
         </div>
       )}

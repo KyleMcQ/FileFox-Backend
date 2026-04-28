@@ -82,4 +82,7 @@ public class UserInfoResponse
 
     [JsonPropertyName("email")]
     public required string Email { get; set; }
+
+    [JsonPropertyName("mfaEnabled")]
+    public bool MfaEnabled { get; set; }
 }
