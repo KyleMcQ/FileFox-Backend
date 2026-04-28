@@ -103,3 +103,39 @@ If the application fails to start with a database connection error:
 - **Rate Limiting**: API endpoints are protected by rate limiting. The `auth` endpoints are limited to 10 requests per minute, and other `api` endpoints are limited to 100 requests per minute.
 - **Security Headers**: The API uses security headers (HSTS, CSP, etc.) to harden the server against common web attacks.
 - **Auditing**: Critical actions like logins and file deletions are logged for security auditing.
+
+## Deployment to AWS
+
+The easiest way to host the FileFox API on AWS is using **AWS App Runner** with a containerized build.
+
+### 1. Prerequisites
+- An **AWS Account**.
+- An **AWS RDS SQL Server** instance (see instructions above).
+- **AWS CLI** and **Docker** installed (if deploying manually).
+
+### 2. Prepare the Container
+The project includes a `Dockerfile` optimized for .NET 8 and AWS environments.
+1. Build the image: `docker build -t filefox-api .`
+2. Push the image to **Amazon ECR (Elastic Container Registry)**.
+
+### 3. Deploy with AWS App Runner
+1. Go to the **App Runner** console.
+2. Click **"Create service"**.
+3. Source: **Container registry** -> **Amazon ECR**.
+4. Choose your `filefox-api` repository and image tag.
+5. Service configuration:
+   - **Port**: `8080` (This matches the `EXPOSE` and `ASPNETCORE_URLS` in the Dockerfile).
+6. **Environment Variables**: Add the following to override the local settings:
+   - `ConnectionStrings__DefaultConnection`: Your full RDS connection string.
+   - `Jwt__Key`: A long, secure random string.
+   - `Jwt__Issuer`: `FileFoxProduction`
+   - `Jwt__Audience`: `FileFoxProductionAudience`
+7. Click **"Create & Deploy"**.
+
+### 4. Networking & Security
+- **Health Checks**: App Runner will use the `/health` endpoint to monitor the application.
+- **RDS Connectivity**: Ensure the RDS Security Group allows inbound traffic from the App Runner service (you may need to use a VPC Connector for private RDS instances).
+- **Public Access**: Once deployed, App Runner provides a secure `https://...` URL for your API.
+
+### 5. Frontend Configuration
+Update your frontend application (e.g., the React Demo) to point to the new App Runner URL.

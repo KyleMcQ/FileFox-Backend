@@ -6,6 +6,7 @@ using FileFox_Backend.Infrastructure.Middleware;
 using FileFox_Backend.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -17,6 +18,18 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+// -------------------- HEALTH CHECKS --------------------
+builder.Services.AddHealthChecks();
+
+// -------------------- FORWARDED HEADERS --------------------
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Clear known networks and proxies to allow headers from any proxy (common in cloud environments)
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // -------------------- SECRET PROVIDER --------------------
 builder.Services.AddSingleton<ISecretProvider, LocalSecretProvider>();
@@ -189,6 +202,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseForwardedHeaders();
+
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
@@ -202,6 +217,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 public partial class Program { }

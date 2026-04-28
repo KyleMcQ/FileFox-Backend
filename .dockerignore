@@ -1,0 +1,9 @@
+**/.git
+**/.vscode
+**/bin
+**/obj
+**/ValidationTests
+**/FileFox_Backend.Tests
+appsettings.Development.json
+Dockerfile
+.dockerignore
