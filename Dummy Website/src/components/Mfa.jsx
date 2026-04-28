@@ -26,33 +26,54 @@ const Mfa = () => {
   };
 
   return (
-    <div className="mfa-container">
-      <h3>Multi-Factor Authentication</h3>
+    <div className="mfa-section">
+      <h4 className="mb-3">Multi-Factor Authentication</h4>
       {!mfaData ? (
-        <button onClick={setupMfa}>Enable MFA</button>
+        <button className="btn btn-primary" onClick={setupMfa}>Enable MFA</button>
       ) : (
-        <div>
-          <p>Secret: {mfaData.base32Secret}</p>
-          <p>Scan the QR code or enter the secret in your authenticator app.</p>
-
-          <div style={{ margin: '20px 0' }}>
-            <QRCodeCanvas value={mfaData.otpAuthUri} size={200} />
-          </div>
-
-          {mfaData.recoveryCodes && (
-            <div style={{ backgroundColor: '#f0f0f0', padding: '10px', margin: '10px 0' }}>
-              <h4>Recovery Codes (Save these!)</h4>
-              <ul style={{ textAlign: 'left' }}>
-                {mfaData.recoveryCodes.map((c, i) => <li key={i}><code>{c}</code></li>)}
-              </ul>
+        <div className="row">
+          <div className="col-md-6 text-center border-end">
+            <p className="mb-2">Scan the QR code or enter the secret.</p>
+            <div className="bg-white p-3 d-inline-block border rounded mb-3">
+              <QRCodeCanvas value={mfaData.otpAuthUri} size={180} />
             </div>
-          )}
-
-          <input type="text" placeholder="Enter 6-digit code" value={code} onChange={(e) => setCode(e.target.value)} />
-          <button onClick={verifyMfa}>Verify & Enable</button>
+            <div className="mb-3">
+              <small className="text-muted d-block">Manual Secret:</small>
+              <code className="h6">{mfaData.base32Secret}</code>
+            </div>
+            <div className="input-group mb-3">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="6-digit code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+              />
+              <button className="btn btn-success" onClick={verifyMfa}>Verify & Enable</button>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <div className="card h-100 bg-light">
+              <div className="card-body">
+                <h5 className="card-title h6 text-danger fw-bold">Recovery Codes (Save these!)</h5>
+                <p className="small text-muted mb-2">Use these codes if you lose access to your authenticator app.</p>
+                <div className="row g-1">
+                  {mfaData.recoveryCodes.map((c, i) => (
+                    <div key={i} className="col-6">
+                      <code className="bg-white border rounded p-1 d-block text-center small">{c}</code>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
-      {status && <p>{status}</p>}
+      {status && (
+        <div className={`alert mt-3 ${status.includes('successfully') ? 'alert-success' : 'alert-danger'}`}>
+          {status}
+        </div>
+      )}
     </div>
   );
 };
