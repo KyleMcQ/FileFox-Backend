@@ -4,6 +4,7 @@
 **/obj
 **/ValidationTests
 **/FileFox_Backend.Tests
+Dummy Website/
 appsettings.Development.json
 Dockerfile
 .dockerignore

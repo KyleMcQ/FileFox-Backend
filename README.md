@@ -104,9 +104,9 @@ If the application fails to start with a database connection error:
 - **Security Headers**: The API uses security headers (HSTS, CSP, etc.) to harden the server against common web attacks.
 - **Auditing**: Critical actions like logins and file deletions are logged for security auditing.
 
-## Deployment to AWS
+## Deployment to AWS (API Only)
 
-The easiest way to host the FileFox API on AWS is using **AWS App Runner** with a containerized build.
+The following instructions describe how to host the **FileFox API** on AWS using **AWS App Runner** with a containerized build. Note that the demonstration frontend (Dummy Website) and validation tests are excluded from the container image.
 
 ### 1. Prerequisites
 - An **AWS Account**.
@@ -138,4 +138,4 @@ The project includes a `Dockerfile` optimized for .NET 8 and AWS environments.
 - **Public Access**: Once deployed, App Runner provides a secure `https://...` URL for your API.
 
 ### 5. Frontend Configuration
-Update your frontend application (e.g., the React Demo) to point to the new App Runner URL.
+Once the API is hosted, update your local or hosted frontend application (e.g., the React Demo in the `Dummy Website/` folder) to point to the new App Runner URL.
