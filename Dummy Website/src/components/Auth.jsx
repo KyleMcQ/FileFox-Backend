@@ -11,6 +11,10 @@ const Auth = ({ onLogin }) => {
   const [mfaCode, setMfaCode] = useState('');
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
   const [error, setError] = useState('');
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetToken, setResetToken] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -52,6 +56,38 @@ const Auth = ({ onLogin }) => {
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    try {
+      const { data } = await api.post('/auth/forgot-password', { email });
+      setMessage('If an account exists, a reset link has been sent.');
+      if (data.resetToken) {
+        console.log("Demo Reset Token:", data.resetToken);
+        setMessage(`Demo Reset Token: ${data.resetToken}`);
+        setResetToken(data.resetToken);
+      }
+    } catch (err) {
+      setError('Request failed');
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    try {
+      await api.post('/auth/reset-password', { token: resetToken, newPassword });
+      setMessage('Password reset successfully. You can now login.');
+      setForgotPassword(false);
+      setResetToken('');
+      setNewPassword('');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Reset failed');
     }
   };
 
@@ -109,6 +145,68 @@ const Auth = ({ onLogin }) => {
     );
   }
 
+  if (forgotPassword) {
+    return (
+      <div className="row justify-content-center">
+        <div className="col-md-5">
+          <div className="card shadow">
+            <div className="card-body">
+              <h2 className="card-title h4 mb-4 text-center">Reset Password</h2>
+              {error && <div className="alert alert-danger">{error}</div>}
+              {message && <div className="alert alert-info">{message}</div>}
+
+              {!resetToken ? (
+                <form onSubmit={handleForgotPassword}>
+                  <div className="mb-3">
+                    <label className="form-label">Email address</label>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary w-100 mb-3">Send Reset Token</button>
+                </form>
+              ) : (
+                <form onSubmit={handleResetPassword}>
+                   <div className="mb-3">
+                    <label className="form-label">Reset Token</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={resetToken}
+                      onChange={(e) => setResetToken(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">New Password</label>
+                    <input
+                      type="password"
+                      className="form-control"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary w-100 mb-3">Reset Password</button>
+                </form>
+              )}
+
+              <div className="text-center">
+                <button className="btn btn-link btn-sm text-decoration-none" onClick={() => { setForgotPassword(false); setError(''); setMessage(''); }}>
+                  Back to Login
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="row justify-content-center">
       <div className="col-md-5">
@@ -116,6 +214,7 @@ const Auth = ({ onLogin }) => {
           <div className="card-body">
             <h2 className="card-title h4 mb-4 text-center">{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
             {error && <div className="alert alert-danger">{error}</div>}
+            {message && <div className="alert alert-info">{message}</div>}
             <form onSubmit={isRegister ? handleRegister : handleLogin}>
               {isRegister && (
                 <div className="mb-3">
@@ -157,9 +256,16 @@ const Auth = ({ onLogin }) => {
               </button>
             </form>
             <div className="text-center">
-              <button className="btn btn-link btn-sm text-decoration-none" onClick={() => { setIsRegister(!isRegister); setError(''); }}>
+              <button className="btn btn-link btn-sm text-decoration-none" onClick={() => { setIsRegister(!isRegister); setError(''); setMessage(''); }}>
                 {isRegister ? 'Already have an account? Login' : "Don't have an account? Register"}
               </button>
+              {!isRegister && (
+                <div className="mt-2">
+                  <button className="btn btn-link btn-sm text-decoration-none text-muted" onClick={() => { setForgotPassword(true); setError(''); setMessage(''); }}>
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
