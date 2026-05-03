@@ -22,13 +22,34 @@ If you already have an account:
 4. Click **"Execute"**.
 5. Copy the `accessToken` from the response body.
 
-### 3. Authorize Swagger UI
+### 3. Account Recovery (Forgot Password)
+If you forget your password:
+1. Locate the **`POST /auth/forgot-password`** endpoint.
+2. Click **"Try it out"**.
+3. Enter your `email`.
+4. Click **"Execute"**.
+5. Copy the `resetToken` from the response. (In a real app, this would be sent to your email).
+6. Locate the **`POST /auth/reset-password`** endpoint.
+7. Click **"Try it out"**.
+8. Enter the `token` and your `newPassword`.
+9. Click **"Execute"**. Your password is now updated.
+
+### 4. Profile Picture
+To upload a profile picture:
+1. First, **Authorize** (see step 5).
+2. Locate the **`POST /auth/profile-picture`** endpoint.
+3. Click **"Try it out"**.
+4. Use the file picker to select an image (Max 1MB).
+5. Click **"Execute"**.
+6. Your profile picture will now be returned in the `profilePicture` field (base64) when you call **`GET /auth/me`**.
+
+### 5. Authorize Swagger UI
 1. Scroll to the top of the Swagger page and click the **"Authorize"** button (padlock icon).
 2. In the **"Value"** text box, paste the `accessToken` you copied.
 3. Click **"Authorize"** and then **"Close"**.
    - *Note: You do NOT need to type "Bearer " anymore; the UI handles it for you.*
 
-### 4. Upload a File
+### 6. Upload a File
 
 #### Option A: Direct Upload (Simple)
 1. Locate **`POST /files/upload`**.
@@ -45,7 +66,7 @@ If you already have an account:
    - Provide the binary data in the request body.
 3. **Complete**: Call **`POST /files/{id}/complete`** to finalize the upload.
 
-### 5. Retrieve a File
+### 7. Retrieve a File
 1. **List Files**: Call **`GET /files`** to see all your uploaded files and their IDs.
 2. **Get Metadata**: Call **`GET /files/{id}`** to get details about a specific file.
 3. **Download Manifest**: Call **`GET /files/{id}/manifest`** to retrieve the encrypted manifest.

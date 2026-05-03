@@ -139,7 +139,7 @@ const Dashboard = ({ onLogout }) => {
         </div>
       </div>
 
-      {showProfile && <Profile user={user} onClose={() => setShowProfile(false)} />}
+      {showProfile && <Profile user={user} onClose={() => setShowProfile(false)} onUpdate={fetchUser} />}
 
       {showMfa && (
         <div className="card mb-4">
