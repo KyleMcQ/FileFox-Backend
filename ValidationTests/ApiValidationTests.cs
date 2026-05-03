@@ -278,4 +278,33 @@ public class ApiValidationTests : IClassFixture<WebApplicationFactory<Program>>
         var refreshData = await refreshRes.Content.ReadFromJsonAsync<JsonElement>();
         Assert.NotNull(refreshData.GetProperty("accessToken").GetString());
     }
+
+    [Fact]
+    public async Task ClearData_WipesDatabase()
+    {
+        // 1. Populate some data
+        var email = "wipe@example.com";
+        var (client, _) = await RegisterAndLogin("WipeUser", email, "Pass123!");
+
+        // Verify data exists in DB
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            Assert.True(await db.Users.AnyAsync(u => u.Email == email));
+        }
+
+        // 2. Call ClearData
+        var clearRes = await client.PostAsync("/Test/clear-data", null);
+        Assert.Equal(HttpStatusCode.OK, clearRes.StatusCode);
+
+        // 3. Verify data is gone
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            // Since we're using InMemoryDatabase in tests, if the ExecuteSqlRawAsync worked (it shouldn't)
+            // we check if it's empty. But it likely threw.
+            // If it didn't throw, check if users are gone.
+            Assert.False(await db.Users.AnyAsync());
+        }
+    }
 }
