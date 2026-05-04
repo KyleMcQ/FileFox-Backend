@@ -72,11 +72,33 @@ To upload a profile picture:
 3. **Download Manifest**: Call **`GET /files/{id}/manifest`** to retrieve the encrypted manifest.
 4. **Download Chunks**: Call **`GET /files/{id}/chunks/{index}`** to retrieve the encrypted data chunks.
 
-## AWS RDS SQL Server Setup
+## Database Configuration
 
-This project uses Amazon RDS for SQL Server for persistent storage of metadata and encrypted file blobs. Follow these steps to set it up:
+This project supports Microsoft SQL Server (e.g., LocalDB, AWS RDS, Azure SQL) for persistent storage, or an In-Memory database for quick testing.
 
-### 1. Create an RDS Instance
+### 1. Configure Connection String
+The connection string is managed in `appsettings.json` under `ConnectionStrings:DefaultConnection`.
+
+#### Option A: In-Memory (Development/Testing only)
+To run the application without a real database, set the connection string to exactly `"InMemory"`:
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "InMemory"
+}
+```
+*Note: Data will be lost when the application stops.*
+
+#### Option B: Microsoft SQL Server (Local or Cloud)
+1. Ensure your SQL Server is running and accessible.
+2. Update `appsettings.json` with your connection details:
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Server=YOUR_SERVER_ADDRESS;Database=FileFoxDb;User Id=YOUR_USER;Password=YOUR_PASSWORD;TrustServerCertificate=True"
+   }
+   ```
+
+### 2. AWS RDS Setup (Optional)
+If you wish to host your database on Amazon RDS:
 1. Log in to your **AWS Management Console**.
 2. Navigate to **RDS** and click **"Create database"**.
 3. Choose **"Standard create"**.
@@ -92,19 +114,11 @@ This project uses Amazon RDS for SQL Server for persistent storage of metadata a
    - **VPC security group**: Create new or choose existing. Ensure it allows inbound traffic on port **1433**.
 9. Click **"Create database"**.
 
-### 2. Configure Connection String
-1. Once the RDS instance is "Available", click on it to see the **Endpoint**.
-2. Open `appsettings.json` in the root of the project.
-3. Update the `DefaultConnection` string:
-   ```json
-   "ConnectionStrings": {
-     "DefaultConnection": "Server=YOUR_RDS_ENDPOINT,1433;Database=FileFoxDb;User Id=admin;Password=YOUR_PASSWORD;TrustServerCertificate=True"
-   }
-   ```
-   - Replace `YOUR_RDS_ENDPOINT` with the endpoint from the AWS console.
-   - Replace `YOUR_PASSWORD` with the master password you set.
+### 3. Using Environment Variables
+For containerized deployments (Docker, AWS App Runner), you can override the connection string using environment variables:
+- `ConnectionStrings__DefaultConnection`
 
-### 3. Run the Application
+### 4. Run the Application
 The application is configured to automatically create the database schema on startup using `db.Database.EnsureCreated()`. No manual migrations are required for the initial setup.
 
 ### 4. Troubleshooting Connection Issues
