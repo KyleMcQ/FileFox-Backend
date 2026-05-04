@@ -35,3 +35,44 @@ DocumentLayout.json
 .github/instructions/snyk_rules.instructions.md
 # Snyk Security Extension - AI Rules (auto-generated)
 .github\instructions\snyk_rules.instructions.md
+
+FileFox-Frontend/node_modules/
+
+# Expo
+FileFox-Frontend/expo/
+FileFox-Frontend/dist/
+FileFox-Frontend/web-build/
+FileFox-Frontend/expo-env.d.ts
+
+# Native
+FileFox-Frontend/.kotlin/
+FileFox-Frontend/*.orig.*
+FileFox-Frontend/*.jks
+FileFox-Frontend/*.p8
+FileFox-Frontend/*.p12
+FileFox-Frontend/*.key
+FileFox-Frontend/*.mobileprovision
+
+# Metro
+FileFox-Frontend/.metro-health-check*
+
+# debug
+FileFox-Frontend/npm-debug.*
+FileFox-Frontend/yarn-debug.*
+FileFox-Frontend/yarn-error.*
+
+# macOS
+FileFox-Frontend/.DS_Store
+*.pem
+
+# local env files
+.FileFox-Frontend/.env*.local
+
+# typescript
+.FileFox-Frontend/*.tsbuildinfo
+
+app-example
+
+# generated native folders
+.FileFox-Frontend/ios
+.FileFox-Frontend/android
