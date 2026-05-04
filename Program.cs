@@ -160,6 +160,22 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Database.EnsureCreated();
 
+        // Self-healing: Add UserId to FileKeys table if it doesn't exist and populate it
+        try
+        {
+            db.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('FileKeys') AND name = 'UserId') " +
+                                        "ALTER TABLE FileKeys ADD UserId UNIQUEIDENTIFIER NULL");
+
+            // Populate UserId for existing records from their associated FileRecord
+            db.Database.ExecuteSqlRaw("UPDATE fk SET fk.UserId = f.UserId " +
+                                        "FROM FileKeys fk INNER JOIN Files f ON fk.FileRecordId = f.Id " +
+                                        "WHERE fk.UserId IS NULL");
+
+            // Now make it NOT NULL if it was successfully populated
+            db.Database.ExecuteSqlRaw("IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('FileKeys') AND name = 'UserId' AND is_nullable = 1) " +
+                                        "ALTER TABLE FileKeys ALTER COLUMN UserId UNIQUEIDENTIFIER NOT NULL");
+        } catch { /* Might fail if database is not SQL Server or table doesn't exist yet */ }
+
         // Self-healing: Ensure AuditLogs.FileRecordId is nullable in case it was created NOT NULL
         try {
             db.Database.ExecuteSqlRaw("ALTER TABLE AuditLogs ALTER COLUMN FileRecordId UNIQUEIDENTIFIER NULL");

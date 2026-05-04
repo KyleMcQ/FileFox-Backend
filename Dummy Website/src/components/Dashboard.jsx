@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useKeys } from '../hooks/useKeys';
-import { unwrapFileKey, decryptData } from '../crypto';
+import { unwrapFileKey, decryptData, wrapFileKey } from '../crypto';
 import Mfa from './Mfa';
 import FileUpload from './FileUpload';
 import Profile from './Profile';
 
 const Dashboard = ({ onLogout }) => {
   const [files, setFiles] = useState([]);
+  const [sharedFiles, setSharedFiles] = useState([]);
   const { keys, loading } = useKeys();
   const [showMfa, setShowMfa] = useState(false);
   const [user, setUser] = useState(null);
@@ -19,6 +20,15 @@ const Dashboard = ({ onLogout }) => {
       setFiles(data);
     } catch (err) {
       console.error("Failed to fetch files", err);
+    }
+  };
+
+  const fetchSharedFiles = async () => {
+    try {
+      const { data } = await api.get('/files/shared');
+      setSharedFiles(data);
+    } catch (err) {
+      console.error("Failed to fetch shared files", err);
     }
   };
 
@@ -34,6 +44,7 @@ const Dashboard = ({ onLogout }) => {
   useEffect(() => {
     if (keys) {
       fetchFiles();
+      fetchSharedFiles();
       fetchUser();
     }
   }, [keys]);
@@ -108,6 +119,43 @@ const Dashboard = ({ onLogout }) => {
       fetchFiles();
     } catch (err) {
       alert("Delete failed");
+    }
+  };
+
+  const handleShare = async (fileId, wrappedKeys) => {
+    const email = prompt("Enter recipient email:");
+    if (!email) return;
+
+    try {
+      // 1. Get recipient's public key
+      const { data: recipientKeyData } = await api.get(`/keys/public?email=${encodeURIComponent(email)}`);
+
+      const pubBuffer = new Uint8Array(atob(recipientKeyData.publicKey).split("").map(c => c.charCodeAt(0)));
+      const recipientPublicKey = await window.crypto.subtle.importKey(
+        "spki",
+        pubBuffer,
+        { name: "RSA-OAEP", hash: "SHA-256" },
+        true,
+        ["encrypt"]
+      );
+
+      // 2. Unwrap file key with our private key
+      const wrappedKey = wrappedKeys[0];
+      const fileKey = await unwrapFileKey(wrappedKey, keys.privateKey);
+
+      // 3. Wrap file key with recipient's public key
+      const newWrappedKey = await wrapFileKey(fileKey, recipientPublicKey);
+
+      // 4. Share with backend
+      await api.post(`/files/${fileId}/share`, {
+        recipientEmail: email,
+        wrappedFileKey: newWrappedKey
+      });
+
+      alert(`File shared with ${email}`);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data || "Sharing failed");
     }
   };
 
@@ -193,9 +241,55 @@ const Dashboard = ({ onLogout }) => {
                     <td className="text-muted small">{new Date(f.uploadedAt).toLocaleString()}</td>
                     <td className="text-end">
                       <div className="btn-group btn-group-sm">
+                        <button className="btn btn-outline-primary" title="Direct Download" onClick={() => handleDownloadDirect(f.id, f.fileName)}>Direct</button>
+                        <button className="btn btn-outline-success" title="Secure Download" onClick={() => handleDownloadSecure(f.id, f.fileName, f.wrappedKeys)}>Secure</button>
+                        <button className="btn btn-outline-info" title="Share File" onClick={() => handleShare(f.id, f.wrappedKeys)}>Share</button>
+                        <button className="btn btn-outline-danger" title="Delete File" onClick={() => handleDelete(f.id)}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="card shadow-sm mt-4">
+        <div className="card-header bg-white">
+          <h5 className="mb-0">Shared Files</h5>
+        </div>
+        <div className="table-responsive">
+          <table className="table table-hover align-middle mb-0">
+            <thead className="table-light">
+              <tr>
+                <th>Name</th>
+                <th>Metadata</th>
+                <th>Size</th>
+                <th>Uploaded</th>
+                <th className="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sharedFiles.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-4 text-muted">No shared files found.</td>
+                </tr>
+              ) : (
+                sharedFiles.map(f => (
+                  <tr key={f.id}>
+                    <td className="fw-medium">{f.fileName} <span className="badge bg-info text-dark ms-1" style={{fontSize: '0.7rem'}}>Enc</span></td>
+                    <td>
+                      {f.encryptedMetadata ? (
+                        <span className="text-truncate d-inline-block" style={{maxWidth: '150px'}} title={atob(f.encryptedMetadata)}>{atob(f.encryptedMetadata)}</span>
+                      ) : '-'}
+                    </td>
+                    <td>{(f.length / 1024).toFixed(2)} KB</td>
+                    <td className="text-muted small">{new Date(f.uploadedAt).toLocaleString()}</td>
+                    <td className="text-end">
+                      <div className="btn-group btn-group-sm">
                         <button className="btn btn-outline-primary" onClick={() => handleDownloadDirect(f.id, f.fileName)}>Direct</button>
                         <button className="btn btn-outline-success" onClick={() => handleDownloadSecure(f.id, f.fileName, f.wrappedKeys)}>Secure</button>
-                        <button className="btn btn-outline-danger" onClick={() => handleDelete(f.id)}>Delete</button>
                       </div>
                     </td>
                   </tr>

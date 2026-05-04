@@ -1,0 +1,8 @@
+Using launch settings from ./Properties/launchSettings.json...
+Building...
+/app/Core/Interfaces/IFileStore.cs(2,7): warning CS0105: The using directive for 'FileFox_Backend.Core.Models' appeared previously in this namespace [/app/FileFox-Backend.csproj]
+/app/Core/Interfaces/ITokenService.cs(3,7): warning CS0105: The using directive for 'FileFox_Backend.Core.Models' appeared previously in this namespace [/app/FileFox-Backend.csproj]
+/app/Core/Interfaces/IUserStore.cs(2,7): warning CS0105: The using directive for 'FileFox_Backend.Core.Models' appeared previously in this namespace [/app/FileFox-Backend.csproj]
+/app/Infrastructure/Services/DbFileStore.cs(7,7): warning CS0105: The using directive for 'FileFox_Backend.Core.Interfaces' appeared previously in this namespace [/app/FileFox-Backend.csproj]
+warn: Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServer[8]
+      The ASP.NET Core developer certificate is not trusted. For information about trusting the ASP.NET Core developer certificate, see https://aka.ms/aspnet/https-trust-dev-cert.
