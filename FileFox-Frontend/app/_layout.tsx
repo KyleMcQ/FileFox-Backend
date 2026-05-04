@@ -1,3 +1,5 @@
+import "../src/polyfills";
+
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { AuthProvider } from "../src/context/authContext";

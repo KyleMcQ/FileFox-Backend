@@ -14,7 +14,9 @@ import {
   encryptData,
   generateFileKey,
   wrapFileKey,
+  importPublicKey,
 } from "../../../../src/crypto/encryption";
+import { Buffer } from "buffer";
 
 const CHUNK_SIZE = 1024 * 1024;
 
@@ -82,17 +84,15 @@ export default function FileUpload({ onUploadSuccess, keys }: any) {
 
     try {
       const fileKey = generateFileKey();
+      const pubKey = importPublicKey(keys.publicKey);
 
-      const wrapped = wrapFileKey(
-        fileKey,
-        keys.publicKey,
-        keys.privateKey
-      );
+      const wrappedFileKey = wrapFileKey(fileKey, pubKey);
 
       const init = await api.post("/files/init", {
         encryptedFileName: file.name,
-        encryptedMetadata: extraMetadata ? btoa(extraMetadata) : null,
-        wrappedFileKey: Buffer.from(wrapped.wrapped).toString("base64"),
+        encryptedMetadata: extraMetadata ? Buffer.from(extraMetadata).toString("base64") : null,
+        wrappedFileKey,
+        recoveryWrappedKey: "SIMULATED_RECOVERY_KEY_WRAPPED",
         chunkSize: CHUNK_SIZE,
         totalSize: file.size,
         contentType: file.type,
@@ -113,11 +113,14 @@ export default function FileUpload({ onUploadSuccess, keys }: any) {
 
         const { encrypted, iv } = await encryptData(chunk, fileKey);
 
-        const payload = new Uint8Array(iv.length + encrypted.length);
-        payload.set(iv, 0);
-        payload.set(encrypted, iv.length);
+        const payload = Buffer.concat([
+          Buffer.from(iv, "binary"),
+          Buffer.from(encrypted, "binary")
+        ]);
 
-        await api.put(`/files/${fileId}/chunks/${i}`, payload);
+        await api.put(`/files/${fileId}/chunks/${i}`, payload, {
+          headers: { "Content-Type": "application/octet-stream" }
+        });
       }
 
       await api.post(`/files/${fileId}/complete`);

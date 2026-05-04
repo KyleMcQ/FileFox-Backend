@@ -97,8 +97,8 @@ export default function Account() {
       const res = await api.post("/auth/mfa/setup");
 
       // backend correct fields
-      setQrUri(res.data.otpAuthUri);
-      setMfaSecret(res.data.base32Secret);
+      setQrUri(res.data.qrCodeUrl);
+      setMfaSecret(res.data.manualKey);
     } catch (err) {
       console.log("MFA setup error:", err);
       Alert.alert("Error", "Failed MFA setup");
@@ -190,7 +190,7 @@ export default function Account() {
       <Pressable
         style={[
           styles.button,
-          { backgroundColor: user.mfaEnabled ? "#666" : "#111827" },
+          { backgroundColor: user.mfaEnabled ? "#666" : "#FF8C42" },
         ]}
         onPress={openMfaSetup}
         disabled={user.mfaEnabled}
@@ -330,6 +330,8 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 20,
     borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#FFD2A6",
   },
 
   modalTitle: {

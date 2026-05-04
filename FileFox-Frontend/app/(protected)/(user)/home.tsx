@@ -3,16 +3,16 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import api from "../../../src/api/apiClient";
+import { useAuth } from "../../../src/hooks/useAuth";
 
 export default function Home() {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     files: 0,
     shared: 0,
     requests: 0,
     activity: 0,
   });
-
-  const user = { name: "" };
 
   useEffect(() => {
     async function load() {
@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>
-        {greeting}, {user.name || "User"}
+        {greeting}, {user?.userName || "User"}
       </Text>
 
       <Text style={styles.subtitle}>

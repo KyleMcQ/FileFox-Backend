@@ -5,13 +5,14 @@ import api from "../../src/api/apiClient";
 import { useAuth } from "../../src/hooks/useAuth";
 
 export default function MFA() {
-  const { mfaToken } = useLocalSearchParams<{ mfaToken: string }>();
+  const { mfaToken, password } = useLocalSearchParams<{ mfaToken: string, password?: string }>();
   const rootNavigationState = useRootNavigationState();
 
   const { setSession } = useAuth();
 
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
 
   // ✅ FIX: wait for router to be mounted
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function MFA() {
   const verify = async () => {
     if (!mfaToken) return;
 
-    if (code.length !== 6) {
+    if (!useRecoveryCode && code.length !== 6) {
       Alert.alert("Error", "Enter 6-digit code");
       return;
     }
@@ -35,17 +36,28 @@ export default function MFA() {
     try {
       setLoading(true);
 
-      const res = await api.post("/auth/login/mfa", {
-        code,
-        mfaToken,
-      });
+      let res;
+      if (useRecoveryCode) {
+        res = await api.post("/auth/login/recovery", {
+          mfaToken,
+          recoveryCode: code,
+        });
+      } else {
+        res = await api.post("/auth/login/mfa", {
+          code,
+          mfaToken,
+        });
+      }
 
-      await setSession(res.data.AccessToken, res.data.RefreshToken);
+      await setSession(res.data.accessToken, res.data.refreshToken, null, password);
+
+      const me = await api.get("/auth/me");
+      await setSession(res.data.accessToken, res.data.refreshToken, me.data, password);
 
       router.replace("/(protected)/(user)/home");
     } catch (err) {
       console.log(err);
-      Alert.alert("Invalid MFA code");
+      Alert.alert(useRecoveryCode ? "Invalid recovery code" : "Invalid MFA code");
     } finally {
       setLoading(false);
     }
@@ -53,20 +65,33 @@ export default function MFA() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>MFA Verification</Text>
+      <Text style={styles.title}>{useRecoveryCode ? "Recovery Code" : "MFA Verification"}</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Enter 6-digit code"
+        placeholder={useRecoveryCode ? "Enter recovery code" : "Enter 6-digit code"}
         value={code}
         onChangeText={setCode}
-        keyboardType="number-pad"
-        maxLength={6}
+        keyboardType={useRecoveryCode ? "default" : "number-pad"}
+        maxLength={useRecoveryCode ? undefined : 6}
+        autoCapitalize="none"
       />
 
       <Pressable style={styles.button} onPress={verify}>
         <Text style={styles.buttonText}>
           {loading ? "Verifying..." : "Verify"}
+        </Text>
+      </Pressable>
+
+      <Pressable
+        style={styles.linkButton}
+        onPress={() => {
+          setUseRecoveryCode(!useRecoveryCode);
+          setCode("");
+        }}
+      >
+        <Text style={styles.linkText}>
+          {useRecoveryCode ? "Use TOTP Code" : "Use Recovery Code"}
         </Text>
       </Pressable>
     </View>
@@ -78,5 +103,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: "bold", textAlign: "center", marginBottom: 30 },
   input: { backgroundColor: "#fff", padding: 14, borderRadius: 10, marginBottom: 12, borderWidth: 1, borderColor: "#FFD2A6", textAlign: "center", letterSpacing: 4 },
   button: { backgroundColor: "#FF8C42", padding: 14, borderRadius: 10, alignItems: "center" },
-  buttonText: { color: "#fff", fontWeight: "600" }
+  buttonText: { color: "#fff", fontWeight: "600" },
+  linkButton: { marginTop: 20 },
+  linkText: { color: "#FF8C42", textAlign: "center", fontWeight: "500" }
 });

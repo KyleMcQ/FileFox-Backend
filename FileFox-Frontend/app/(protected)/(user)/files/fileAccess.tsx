@@ -22,8 +22,9 @@ export default function FileAccess() {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FFE7D1", padding: 20 }}>
-      <Text style={{ fontSize: 22, fontWeight: "bold" }}>File Access</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>File Access</Text>
+      <Text style={styles.subtitle}>Files shared with you</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#FF8C42" />
@@ -32,8 +33,14 @@ export default function FileAccess() {
           data={sharedFiles}
           keyExtractor={(i) => i.id}
           renderItem={({ item }) => (
-            <View style={{ backgroundColor: "#fff", padding: 10, marginVertical: 5 }}>
-              <Text>{item.fileName}</Text>
+            <View style={styles.card}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fileName}>{item.fileName}</Text>
+                <Text style={styles.sharedWith}>Owner: {item.ownerName || "Unknown"}</Text>
+              </View>
+              <View style={styles.statusBox}>
+                <Text style={[styles.statusText, { color: "#10B981" }]}>Secure</Text>
+              </View>
             </View>
           )}
         />

@@ -5,6 +5,7 @@ import {
   ReactNode,
 } from "react";
 import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 import api from "../api/apiClient";
 
 export interface User {
@@ -19,12 +20,14 @@ interface AuthContextType {
   accessToken: string | null;
   refreshToken: string | null;
   loading: boolean;
+  password?: string; // Store password for session key decryption
 
   login: (email: string, password: string) => Promise<any>;
   setSession: (
     access: string,
     refresh: string,
-    user?: User | null
+    user?: User | null,
+    password?: string
   ) => void;
   logoutUser: () => Promise<void>;
 }
@@ -36,17 +39,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [password, setPassword] = useState<string | undefined>(undefined);
 
   // 🔥 LOAD SESSION ON APP START
   useEffect(() => {
     const init = async () => {
-      const token = await SecureStore.getItemAsync("accessToken");
-      const refresh = await SecureStore.getItemAsync("refreshToken");
+      try {
+        let token, refresh;
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+          refresh = localStorage.getItem("refreshToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+          refresh = await SecureStore.getItemAsync("refreshToken");
+        }
 
-      if (token) setAccessToken(token);
-      if (refresh) setRefreshToken(refresh);
-
-      setLoading(false);
+        if (token) setAccessToken(token);
+        if (refresh) setRefreshToken(refresh);
+      } catch (e) {
+        console.error("Auth init error:", e);
+      } finally {
+        setLoading(false);
+      }
     };
 
     init();
@@ -66,13 +80,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setSession = (
     access: string,
     refresh: string,
-    userData: User | null = null
+    userData: User | null = null,
+    userPassword?: string
   ) => {
     setAccessToken(access);
     setRefreshToken(refresh);
+    if (userPassword) setPassword(userPassword);
 
-    SecureStore.setItemAsync("accessToken", access);
-    SecureStore.setItemAsync("refreshToken", refresh);
+    if (Platform.OS === "web") {
+      localStorage.setItem("accessToken", access);
+      localStorage.setItem("refreshToken", refresh);
+    } else {
+      SecureStore.setItemAsync("accessToken", access);
+      SecureStore.setItemAsync("refreshToken", refresh);
+    }
 
     if (userData) setUser(userData);
   };
@@ -81,9 +102,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setAccessToken(null);
     setRefreshToken(null);
+    setPassword(undefined);
 
-    await SecureStore.deleteItemAsync("accessToken");
-    await SecureStore.deleteItemAsync("refreshToken");
+    if (Platform.OS === "web") {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+    } else {
+      await SecureStore.deleteItemAsync("accessToken");
+      await SecureStore.deleteItemAsync("refreshToken");
+    }
   };
 
   return (
@@ -93,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accessToken,
         refreshToken,
         loading,
+        password,
         login,
         setSession,
         logoutUser,
