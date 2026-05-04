@@ -17,23 +17,27 @@ export default function Login() {
     try {
       const res = await login(email, password);
 
+      if (res.mfaRequired) {
+        router.push({
+          pathname: "/(auth)/mfa",
+          params: { mfaToken: res.mfaToken, password },
+        });
+        return;
+      }
+
       if (!res?.accessToken) {
         Alert.alert("Login failed");
         return;
       }
 
-      // 1. store token first
-      await setSession(res.accessToken, res.refreshToken);
+      // 1. store token and password first
+      await setSession(res.accessToken, res.refreshToken, null, password);
 
       // 2. force API to use new token immediately
       const me = await api.get("/auth/me");
 
-      // 3. overwrite user in context (THIS FIXES DRAWER)
-      await setSession(
-        res.accessToken,
-        res.refreshToken,
-        me.data
-      );
+      // 3. overwrite user in context
+      await setSession(res.accessToken, res.refreshToken, me.data, password);
 
       router.replace("/(protected)/(user)/home");
     } catch (err) {
@@ -55,6 +59,20 @@ export default function Login() {
       />
 
       <PrimaryButton title="Login" onPress={handleLogin} />
+
+      <Text
+        style={styles.linkText}
+        onPress={() => router.push("/(auth)/forgotPassword")}
+      >
+        Forgot Password?
+      </Text>
+
+      <Text
+        style={styles.linkText}
+        onPress={() => router.push("/(auth)/register")}
+      >
+        Don&apos;t have an account? Register
+      </Text>
     </View>
   );
 }
@@ -71,5 +89,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 30,
+    color: "#333",
+  },
+  linkText: {
+    textAlign: "center",
+    marginTop: 20,
+    color: "#FF8C42",
+    fontWeight: "500",
   },
 });

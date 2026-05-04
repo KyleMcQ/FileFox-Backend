@@ -2,6 +2,11 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import api from "../../src/api/apiClient";
+import {
+  generateUserKeyPair,
+  exportPublicKey,
+  exportEncryptedPrivateKey,
+} from "../../src/crypto/encryption";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -29,15 +34,41 @@ export default function Register() {
 
       setLoading(true);
 
-      const res = await api.post("/auth/register", {
+      await api.post("/auth/register", {
         username: username.trim(),
         email: email.trim().toLowerCase(),
         password,
       });
 
-      console.log("REGISTER SUCCESS:", res.data);
+      // Login to register keys
+      const loginRes = await api.post("/auth/login", {
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-      Alert.alert("Success", "Account created successfully");
+      const token = loginRes.data.accessToken;
+
+      // Generate and register keys
+      const keyPair = await generateUserKeyPair();
+      const publicKey = exportPublicKey(keyPair.publicKey);
+      const encryptedPrivateKey = await exportEncryptedPrivateKey(
+        keyPair.privateKey,
+        password
+      );
+
+      await api.post(
+        "/keys/register",
+        {
+          algorithm: "RSA-OAEP",
+          publicKey,
+          encryptedPrivateKey,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      Alert.alert("Success", "Account and encryption keys created successfully");
 
       router.replace("/(auth)/login");
     } catch (err: any) {
