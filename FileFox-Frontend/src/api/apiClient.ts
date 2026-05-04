@@ -2,8 +2,7 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 
 const api = axios.create({
-  baseURL:
-    "https://filefox-api-prod-hcc3e9cmcpfyefax.ukwest-01.azurewebsites.net",
+  baseURL: "https://localhost:7227",
 });
 
 api.interceptors.request.use(async (config) => {

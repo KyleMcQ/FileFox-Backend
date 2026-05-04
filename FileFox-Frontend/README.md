@@ -32,11 +32,11 @@ A secure file storage and sharing mobile application built with **React Native**
 
 ### API Endpoint
 
-To point the application to your backend, modify the `API_BASE_URL` in `src/api/apiClient.ts`:
+To point the application to your backend, modify the `baseURL` in `src/api/apiClient.ts`:
 
 ```typescript
 const api = axios.create({
-  baseURL: "http://your-api-url:5026", // Change this to your backend URL
+  baseURL: "https://localhost:7227", // Default API URL
 });
 ```
 

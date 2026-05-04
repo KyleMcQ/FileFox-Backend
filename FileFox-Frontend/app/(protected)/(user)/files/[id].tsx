@@ -50,7 +50,7 @@ export default function FileView() {
 
     try {
       const fileUri =
-        (FileSystem.documentDirectory || "") +
+        ((FileSystem as any).documentDirectory || "") +
         (file?.fileName ?? "downloaded-file");
 
       if (secure) {
