@@ -44,19 +44,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 🔥 LOAD SESSION ON APP START
   useEffect(() => {
     const init = async () => {
-      let token, refresh;
-      if (Platform.OS === "web") {
-        token = localStorage.getItem("accessToken");
-        refresh = localStorage.getItem("refreshToken");
-      } else {
-        token = await SecureStore.getItemAsync("accessToken");
-        refresh = await SecureStore.getItemAsync("refreshToken");
+      try {
+        let token, refresh;
+        if (Platform.OS === "web") {
+          token = localStorage.getItem("accessToken");
+          refresh = localStorage.getItem("refreshToken");
+        } else {
+          token = await SecureStore.getItemAsync("accessToken");
+          refresh = await SecureStore.getItemAsync("refreshToken");
+        }
+
+        if (token) setAccessToken(token);
+        if (refresh) setRefreshToken(refresh);
+      } catch (e) {
+        console.error("Auth init error:", e);
+      } finally {
+        setLoading(false);
       }
-
-      if (token) setAccessToken(token);
-      if (refresh) setRefreshToken(refresh);
-
-      setLoading(false);
     };
 
     init();

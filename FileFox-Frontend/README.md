@@ -40,6 +40,8 @@ const api = axios.create({
 });
 ```
 
+> **Note for Mobile Devices:** `localhost` refers to the phone itself. If you are running the app on a physical device, you must use your computer's local IP address (e.g., `http://192.168.1.5:7227`) and ensure the backend is listening on all interfaces.
+
 ## 🔒 Security & Encryption
 
 FileFox-Frontend implements robust end-to-end encryption to ensure your data remains private.

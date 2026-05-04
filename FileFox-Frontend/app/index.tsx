@@ -1,16 +1,14 @@
-import { Stack } from "expo-router";
+import { Redirect } from "expo-router";
 import { useAuth } from "../src/hooks/useAuth";
 
-export default function RootLayout() {
-  const { loading } = useAuth();
+export default function Index() {
+  const { accessToken, loading } = useAuth();
 
   if (loading) return null;
 
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(protected)" />
-      <Stack.Screen name="modal" />
-    </Stack>
-  );
+  if (!accessToken) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  return <Redirect href="/(protected)/(user)/home" />;
 }

@@ -1,11 +1,7 @@
 import forge from "node-forge";
-import * as SecureStore from "expo-secure-store";
 import { Buffer } from "buffer";
 
 /* ================= CONSTANTS ================= */
-
-const PRIVATE_KEY_STORAGE = "encryptedPrivateKey";
-const PUBLIC_KEY_STORAGE = "publicKey";
 const PBKDF2_ITERATIONS = 100000;
 
 /* ================= USER KEY MANAGEMENT ================= */
