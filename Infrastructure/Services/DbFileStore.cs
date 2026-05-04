@@ -47,6 +47,7 @@ public class DbFileStore : IFileStore
             _db.FileKeys.Add(new FileKey
             {
                 FileRecordId = fileId,
+                UserId = userId,
                 WrappedFileKey = wrappedFileKey
             });
         }
@@ -66,9 +67,10 @@ public class DbFileStore : IFileStore
 
     public async Task<FileRecord?> GetAsync(Guid userId, Guid fileId)
     {
+        // Check if user is owner OR has a key for this file
         return await _db.Files
             .Include(f => f.Keys)
-            .FirstOrDefaultAsync(f => f.UserId == userId && f.Id == fileId);
+            .FirstOrDefaultAsync(f => (f.UserId == userId || f.Keys.Any(k => k.UserId == userId)) && f.Id == fileId);
     }
 
     public async Task<bool> DeleteAsync(Guid userId, Guid fileId)

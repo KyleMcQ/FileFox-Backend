@@ -83,7 +83,7 @@ public class FilesControllerTests
         var userId = Guid.NewGuid();
         var fileId = Guid.NewGuid();
         db.Files.Add(new FileRecord { Id = fileId, UserId = userId, EncryptedFileName = "test.bin", ManifestBlobPath = "path" });
-        db.FileKeys.Add(new FileKey { FileRecordId = fileId, WrappedFileKey = "key123" });
+        db.FileKeys.Add(new FileKey { FileRecordId = fileId, UserId = userId, WrappedFileKey = "key123" });
         await db.SaveChangesAsync();
 
         controller.ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext

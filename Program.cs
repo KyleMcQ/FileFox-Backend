@@ -23,7 +23,17 @@ builder.Services.AddSingleton<ISecretProvider, LocalSecretProvider>();
 
 // -------------------- DATABASE --------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (connectionString == "InMemory")
+    {
+        options.UseInMemoryDatabase("FileFoxDb");
+    }
+    else
+    {
+        options.UseSqlServer(connectionString);
+    }
+});
 
 // -------------------- SERVICES --------------------
 builder.Services.AddScoped<IUserStore, EFCoreUserStore>();
@@ -143,22 +153,45 @@ using (var scope = app.Services.CreateScope())
     var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
     var connectionString = config.GetConnectionString("DefaultConnection");
 
-    if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("YOUR_AWS_RDS_ENDPOINT"))
+    if (connectionString != "InMemory")
     {
-        Console.WriteLine("********************************************************************************");
-        Console.WriteLine("ERROR: Database Connection String is not configured.");
-        Console.WriteLine("Please update 'DefaultConnection' in appsettings.json with your AWS RDS details.");
-        Console.WriteLine("Refer to the README.md for setup instructions.");
-        Console.WriteLine("********************************************************************************");
-        // In a real production app, we might just log this, but for a dev-ready project,
-        // stopping early with a clear message is helpful.
-        return;
+        if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("YOUR_AWS_RDS_ENDPOINT"))
+        {
+            Console.WriteLine("********************************************************************************");
+            Console.WriteLine("ERROR: Database Connection String is not configured.");
+            Console.WriteLine("Please update 'DefaultConnection' in appsettings.json with your AWS RDS details.");
+            Console.WriteLine("Refer to the README.md for setup instructions.");
+            Console.WriteLine("********************************************************************************");
+            return;
+        }
     }
 
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        if (db.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory")
+        {
+            goto SkipSqlInit;
+        }
+
         db.Database.EnsureCreated();
+
+        // Self-healing: Add UserId to FileKeys table if it doesn't exist and populate it
+        try
+        {
+            db.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('FileKeys') AND name = 'UserId') " +
+                                        "ALTER TABLE FileKeys ADD UserId UNIQUEIDENTIFIER NULL");
+
+            // Populate UserId for existing records from their associated FileRecord
+            db.Database.ExecuteSqlRaw("UPDATE fk SET fk.UserId = f.UserId " +
+                                        "FROM FileKeys fk INNER JOIN Files f ON fk.FileRecordId = f.Id " +
+                                        "WHERE fk.UserId IS NULL");
+
+            // Now make it NOT NULL if it was successfully populated
+            db.Database.ExecuteSqlRaw("IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('FileKeys') AND name = 'UserId' AND is_nullable = 1) " +
+                                        "ALTER TABLE FileKeys ALTER COLUMN UserId UNIQUEIDENTIFIER NOT NULL");
+        } catch { /* Might fail if database is not SQL Server or table doesn't exist yet */ }
 
         // Self-healing: Ensure AuditLogs.FileRecordId is nullable in case it was created NOT NULL
         try {
@@ -176,6 +209,8 @@ using (var scope = app.Services.CreateScope())
             db.Database.ExecuteSqlRaw("IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'ProfilePictureContentType') " +
                                      "ALTER TABLE Users ADD ProfilePictureContentType NVARCHAR(MAX) NULL");
         } catch { /* Might fail if database is not SQL Server or other issues */ }
+
+    SkipSqlInit:;
     }
     catch (Exception ex)
     {

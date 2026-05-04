@@ -104,8 +104,9 @@ const FileUpload = ({ onUploadSuccess, keys }) => {
     <div className="file-upload">
       <div className="row g-3 align-items-end">
         <div className="col-md-4">
-          <label className="form-label">Select File</label>
+          <label htmlFor="fileInput" className="form-label">Select File</label>
           <input
+            id="fileInput"
             type="file"
             className="form-control"
             onChange={(e) => setFile(e.target.files[0])}

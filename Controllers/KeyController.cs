@@ -80,4 +80,22 @@ public class KeyController : ControllerBase
 
         return key == null ? NotFound() : Ok(key);
     }
+
+    // ---------------- GET PUBLIC KEY BY EMAIL ----------------
+    [HttpGet("public")]
+    public async Task<IActionResult> GetPublicKeyByEmail([FromQuery] string email)
+    {
+        var user = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null) return NotFound("User not found");
+
+        var key = await _dbContext.UserKeyPairs
+            .Where(k => k.UserId == user.Id && k.RevokedAt == null)
+            .OrderByDescending(k => k.KeyVersion)
+            .Select(k => new { k.PublicKey, k.Algorithm, UserId = user.Id })
+            .FirstOrDefaultAsync();
+
+        return key == null ? NotFound("User has no active keys") : Ok(key);
+    }
 }

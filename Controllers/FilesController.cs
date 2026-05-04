@@ -64,6 +64,7 @@ public class FilesController : ControllerBase
         var key = new FileKey
         {
             FileRecordId = fileId,
+            UserId = userId,
             WrappedFileKey = dto.WrappedFileKey
         };
 
@@ -139,7 +140,7 @@ public class FilesController : ControllerBase
             Length = f.TotalSize,
             UploadedAt = f.UploadedAt,
             CryptoVersion = f.CryptoVersion,
-            WrappedKeys = f.Keys.Select(k => k.WrappedFileKey).ToList(),
+            WrappedKeys = f.Keys.Where(k => k.UserId == userId).Select(k => k.WrappedFileKey).ToList(),
             RecoveryWrappedKey = f.RecoveryWrappedKey
         });
 
@@ -151,9 +152,7 @@ public class FilesController : ControllerBase
     public async Task<IActionResult> GetMetadata(Guid id)
     {
         var userId = User.GetUserId();
-        var record = await _db.Files
-            .Include(f => f.Keys)
-            .FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        var record = await _fileStore.GetAsync(userId, id);
 
         if (record == null) return NotFound();
 
@@ -166,7 +165,7 @@ public class FilesController : ControllerBase
             Length = record.TotalSize,
             UploadedAt = record.UploadedAt,
             CryptoVersion = record.CryptoVersion,
-            WrappedKeys = record.Keys.Select(k => k.WrappedFileKey).ToList(),
+            WrappedKeys = record.Keys.Where(k => k.UserId == userId).Select(k => k.WrappedFileKey).ToList(),
             RecoveryWrappedKey = record.RecoveryWrappedKey
         };
 
@@ -178,7 +177,7 @@ public class FilesController : ControllerBase
     public async Task<IActionResult> GetManifest(Guid id)
     {
         var userId = User.GetUserId();
-        var record = await _db.Files.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        var record = await _fileStore.GetAsync(userId, id);
         if (record == null) return NotFound();
 
         var stream = await _blob.GetManifestAsync(id);
@@ -192,7 +191,7 @@ public class FilesController : ControllerBase
     public async Task<IActionResult> GetChunk(Guid id, int index)
     {
         var userId = User.GetUserId();
-        var record = await _db.Files.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        var record = await _fileStore.GetAsync(userId, id);
         if (record == null) return NotFound();
 
         var stream = await _blob.GetChunkAsync(id, index);
@@ -206,7 +205,7 @@ public class FilesController : ControllerBase
     public async Task<IActionResult> Download(Guid id)
     {
         var userId = User.GetUserId();
-        var record = await _db.Files.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        var record = await _fileStore.GetAsync(userId, id);
 
         if (record == null) return NotFound();
 
@@ -250,5 +249,63 @@ public class FilesController : ControllerBase
         if (!success) return NotFound();
 
         return Ok();
+    }
+
+    // ---------------- SHARE FILE ----------------
+    [HttpPost("{id:guid}/share")]
+    public async Task<IActionResult> Share(Guid id, [FromBody] ShareFileRequest request)
+    {
+        var ownerId = User.GetUserId();
+        var record = await _db.Files.FirstOrDefaultAsync(f => f.Id == id && f.UserId == ownerId);
+        if (record == null) return NotFound("File not found or you are not the owner");
+
+        var recipient = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.RecipientEmail);
+        if (recipient == null) return NotFound("Recipient not found");
+
+        if (recipient.Id == ownerId) return BadRequest("You cannot share a file with yourself");
+
+        var existingKey = await _db.FileKeys.FirstOrDefaultAsync(k => k.FileRecordId == id && k.UserId == recipient.Id);
+        if (existingKey != null) return BadRequest("File already shared with this user");
+
+        var newKey = new FileKey
+        {
+            FileRecordId = id,
+            UserId = recipient.Id,
+            WrappedFileKey = request.WrappedFileKey
+        };
+
+        _db.FileKeys.Add(newKey);
+        await _db.SaveChangesAsync();
+
+        await _audit.LogAsync(ownerId, $"Shared file with {request.RecipientEmail}", id);
+
+        return Ok();
+    }
+
+    // ---------------- LIST SHARED FILES ----------------
+    [HttpGet("shared")]
+    public async Task<IActionResult> ListShared()
+    {
+        var userId = User.GetUserId();
+
+        var sharedFiles = await _db.Files
+            .Include(f => f.Keys)
+            .Where(f => f.UserId != userId && f.Keys.Any(k => k.UserId == userId))
+            .ToListAsync();
+
+        var dtos = sharedFiles.Select(f => new FileMetadataDto
+        {
+            Id = f.Id,
+            FileName = f.EncryptedFileName,
+            EncryptedMetadata = f.EncryptedMetadata,
+            ContentType = f.ContentType,
+            Length = f.TotalSize,
+            UploadedAt = f.UploadedAt,
+            CryptoVersion = f.CryptoVersion,
+            WrappedKeys = f.Keys.Where(k => k.UserId == userId).Select(k => k.WrappedFileKey).ToList(),
+            RecoveryWrappedKey = f.RecoveryWrappedKey
+        });
+
+        return Ok(dtos);
     }
 }
